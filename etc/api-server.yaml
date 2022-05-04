@@ -1,0 +1,49 @@
+server:
+  mode: debug
+  healthz: true
+  middlewares:
+    - recovery
+    - logger
+    - cors
+    - requestid
+
+http:
+  bind-address: 127.0.0.1
+  bind-port: 9080
+  tls:
+    cert-key:
+    cert-dir:
+    pair-name:
+
+grpc:
+  bind-address: 127.0.0.1
+  bind-port: 9999
+  max-msg-size: 100000
+
+mysql:
+  host: 127.0.0.1
+  username: root
+  password: root
+  database: candle-light
+  max-idle-connections: 30
+  max-open-connections: 30
+  max-connection-life-time: 30
+  log-level: 1
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+  database: 15
+
+jwt:
+  Realm: test zone
+  key: secret key
+  timeout: 1
+  max-refresh: 2
+
+log:
+
+feature:
+
+casbin:
+  model-path: resource/rbac_model.conf
