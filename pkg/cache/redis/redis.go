@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/BooeZhang/gin-layout/internal/pkg/options"
-	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/BooeZhang/gin-layout/store"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/BooeZhang/gin-layout/internal/pkg/options"
+	"github.com/BooeZhang/gin-layout/pkg/cache"
+	"github.com/BooeZhang/gin-layout/pkg/log"
 
 	"github.com/go-redis/redis/v8"
 	"go.uber.org/zap"
@@ -20,7 +21,7 @@ type datastore struct {
 }
 
 var (
-	redisFactory store.Cache
+	redisFactory cache.Cache
 	once         sync.Once
 )
 
@@ -36,8 +37,8 @@ func (ds *datastore) GetCache() redis.UniversalClient {
 	return ds.redisCli
 }
 
-// GetRedisFactoryOr 使用给定的配置创建 redis 工厂。
-func GetRedisFactoryOr(opts *options.RedisOptions) (store.Cache, error) {
+// NewRedisFactoryOr 使用给定的配置创建 redis 工厂。
+func NewRedisFactoryOr(opts *options.RedisOptions) (cache.Cache, error) {
 	if opts == nil && redisFactory == nil {
 		return nil, fmt.Errorf("failed to get redis store fatory")
 	}
@@ -103,6 +104,6 @@ func GetRedisFactoryOr(opts *options.RedisOptions) (store.Cache, error) {
 	return redisFactory, nil
 }
 
-func GetRedisFactory() store.Cache {
+func GetRedisFactory() cache.Cache {
 	return redisFactory
 }

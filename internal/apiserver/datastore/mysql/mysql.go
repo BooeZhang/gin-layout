@@ -3,41 +3,33 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/BooeZhang/gin-layout/internal/pkg/options"
-	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/BooeZhang/gin-layout/pkg/logger"
-	"github.com/BooeZhang/gin-layout/store"
 	"os"
 	"sync"
 
+	"github.com/BooeZhang/gin-layout/internal/apiserver/model"
+	"github.com/BooeZhang/gin-layout/internal/pkg/options"
+	"github.com/BooeZhang/gin-layout/pkg/log"
+	"github.com/BooeZhang/gin-layout/pkg/logger"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+)
+
+var (
+	mysqlFactory *datastore
+	once         sync.Once
 )
 
 type datastore struct {
 	db *gorm.DB
 }
 
-func (ds *datastore) Close() error {
-	_db, err := ds.db.DB()
-	if err != nil {
-		return fmt.Errorf("get gorm db instance failed: %w", err)
-	}
-	return _db.Close()
+func (ds *datastore) SysUser() ISysUser {
+	return newSysUser(ds)
 }
-
-func (ds *datastore) GetDB() *gorm.DB {
-	return ds.db
-}
-
-var (
-	mysqlFactory store.Factory
-	once         sync.Once
-)
 
 // GetMysqlFactoryOr 使用给定的配置创建 mysql 工厂。
-func GetMysqlFactoryOr(opts *options.MySQLOptions) (store.Factory, error) {
+func GetMysqlFactoryOr(opts *options.MySQLOptions) (*datastore, error) {
 	if opts == nil && mysqlFactory == nil {
 		return nil, fmt.Errorf("failed to get mysql store fatory")
 	}
@@ -87,6 +79,15 @@ func GetMysqlFactoryOr(opts *options.MySQLOptions) (store.Factory, error) {
 	return mysqlFactory, nil
 }
 
-func GetMysqlFactory() store.Factory {
+func GetMysqlFactory() *datastore {
 	return mysqlFactory
+}
+
+func migrateDatabase(db *gorm.DB) error {
+	if err := db.AutoMigrate(
+		new(model.SysUserModel),
+	); err != nil {
+		return fmt.Errorf("migrate user model failed: %w", err)
+	}
+	return nil
 }

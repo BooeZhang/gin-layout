@@ -2,13 +2,14 @@ package router
 
 import (
 	"encoding/base64"
+	"strings"
+	"time"
+
+	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore"
 	"github.com/BooeZhang/gin-layout/internal/apiserver/model"
 	"github.com/BooeZhang/gin-layout/middleware"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/response"
-	"github.com/BooeZhang/gin-layout/store"
-	"strings"
-	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ type loginInfo struct {
 	Password string `form:"password" json:"password" binding:"required"`
 }
 
-func newJWTAuth(store store.Factory) *jwt.GinJWTMiddleware {
+func newJWTAuth(store datastore.Factory) *jwt.GinJWTMiddleware {
 	ginJwt, _ := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:            viper.GetString("jwt.Realm"),
 		SigningAlgorithm: "HS256",
@@ -57,7 +58,7 @@ func newJWTAuth(store store.Factory) *jwt.GinJWTMiddleware {
 }
 
 // 校验登陆用户是否合法并生成jwt token
-func authenticator(store store.Factory) func(c *gin.Context) (interface{}, error) {
+func authenticator(store datastore.Factory) func(c *gin.Context) (interface{}, error) {
 	return func(c *gin.Context) (interface{}, error) {
 		var login loginInfo
 		var err error
@@ -72,9 +73,7 @@ func authenticator(store store.Factory) func(c *gin.Context) (interface{}, error
 			return "", jwt.ErrFailedAuthentication
 		}
 
-		var user model.SysUserModel
-		db := store.GetDB()
-		err = db.Model(new(model.SysUserModel)).Where("user_name=?", login.Username).First(&user).Error
+		user, err := store.SysUser().GetSysUserByName(c.Request.Context(), login.Username)
 		if err != nil {
 			log.Errorf("get user information failed: %s", err.Error())
 
