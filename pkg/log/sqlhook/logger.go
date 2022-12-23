@@ -1,4 +1,4 @@
-package logger
+package sqlhook
 
 import (
 	"context"
@@ -103,28 +103,28 @@ func (l *logger) LogMode(level gormlogger.LogLevel) gormlogger.Interface {
 }
 
 // Info print info.
-func (l logger) Info(ctx context.Context, msg string, data ...interface{}) {
+func (l *logger) Info(ctx context.Context, msg string, data ...interface{}) {
 	if l.LogLevel >= Info {
 		l.Printf(l.infoStr+msg, append([]interface{}{fileWithLineNum()}, data...)...)
 	}
 }
 
 // Warn print warn messages.
-func (l logger) Warn(ctx context.Context, msg string, data ...interface{}) {
+func (l *logger) Warn(ctx context.Context, msg string, data ...interface{}) {
 	if l.LogLevel >= Warn {
 		l.Printf(l.warnStr+msg, append([]interface{}{fileWithLineNum()}, data...)...)
 	}
 }
 
 // Error print error messages.
-func (l logger) Error(ctx context.Context, msg string, data ...interface{}) {
+func (l *logger) Error(ctx context.Context, msg string, data ...interface{}) {
 	if l.LogLevel >= Error {
 		l.Printf(l.errStr+msg, append([]interface{}{fileWithLineNum()}, data...)...)
 	}
 }
 
 // Trace print sql message.
-func (l logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+func (l *logger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.LogLevel <= 0 {
 		return
 	}

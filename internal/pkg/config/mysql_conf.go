@@ -1,9 +1,9 @@
-package options
+package config
 
 import "time"
 
-// MySQLOptions mysql配置项
-type MySQLOptions struct {
+// MySQLConfig mysql配置项
+type MySQLConfig struct {
 	Host                  string        `json:"host,omitempty"                     mapstructure:"host"`
 	Username              string        `json:"username,omitempty"                 mapstructure:"username"`
 	Password              string        `json:"-"                                  mapstructure:"password"`
@@ -14,9 +14,9 @@ type MySQLOptions struct {
 	LogLevel              int           `json:"log-level"                          mapstructure:"log-level"`
 }
 
-// NewMySQLOptions 创建一个默认的mysql配置项.
-func NewMySQLOptions() *MySQLOptions {
-	return &MySQLOptions{
+// NewMySQLConfig 创建一个默认的mysql配置项.
+func NewMySQLConfig() *MySQLConfig {
+	return &MySQLConfig{
 		Host:                  "127.0.0.1:3306",
 		Username:              "",
 		Password:              "",

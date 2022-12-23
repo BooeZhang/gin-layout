@@ -2,12 +2,12 @@ package router
 
 import (
 	"encoding/base64"
+	"github.com/BooeZhang/gin-layout/internal/apiserver/middleware"
 	"strings"
 	"time"
 
 	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore"
 	"github.com/BooeZhang/gin-layout/internal/apiserver/model"
-	"github.com/BooeZhang/gin-layout/middleware"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/response"
 

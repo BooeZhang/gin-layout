@@ -1,12 +1,15 @@
 package datastore
 
-import "github.com/BooeZhang/gin-layout/internal/apiserver/datastore/mysql"
+import (
+	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore/datainterface"
+)
 
 var _datastore Factory
 
 // Factory 数据集工场
 type Factory interface {
-	SysUser() mysql.ISysUser
+	SysUser() datainterface.ISysUser
+	Close() error
 }
 
 // Client return the store client instance.

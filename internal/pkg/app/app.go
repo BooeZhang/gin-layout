@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"github.com/BooeZhang/gin-layout/internal/pkg/options"
+	"github.com/BooeZhang/gin-layout/internal/pkg/config"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -19,7 +19,7 @@ var (
 // App 应用
 type App struct {
 	basename string
-	options  *options.Options
+	cnf      *config.Config
 	runFunc  RunFunc
 	silence  bool
 	noConfig bool
@@ -30,9 +30,9 @@ type App struct {
 type Option func(*App)
 
 // WithOptions 用于初始化应用程序配置项。
-func WithOptions(opt *options.Options) Option {
+func WithOptions(opt *config.Config) Option {
 	return func(a *App) {
-		a.options = opt
+		a.cnf = opt
 	}
 }
 
@@ -70,7 +70,7 @@ func NewApp(opts ...Option) *App {
 // buildCommand 应用程序命令行程序
 func (a *App) buildCommand() {
 	cmd := cobra.Command{
-		Use:           FormatBaseName("api-server"),
+		Use:           FormatBaseName(a.basename),
 		Short:         "API服务",
 		Long:          "API服务",
 		SilenceUsage:  true,
@@ -80,7 +80,7 @@ func (a *App) buildCommand() {
 	cmd.SetErr(os.Stderr)
 	cmd.Flags().SortFlags = true
 	if !a.noConfig {
-		options.AddConfigFlag(a.basename, cmd.Flags())
+		config.AddConfigFlag(a.basename, cmd.Flags())
 	}
 	if a.runFunc != nil {
 		cmd.RunE = a.runCommand
@@ -98,13 +98,13 @@ func (a *App) runCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		if err := viper.Unmarshal(a.options); err != nil {
+		if err := viper.Unmarshal(a.cnf); err != nil {
 			return err
 		}
 	}
 
 	if !a.silence {
-		log.Infof("%v Starting %s ...", progressMessage, "api-server")
+		log.Infof("%v Starting %s ...", progressMessage, a.basename)
 		if !a.noConfig {
 			log.Infof("%v Config file used: `%s`", progressMessage, viper.ConfigFileUsed())
 		}

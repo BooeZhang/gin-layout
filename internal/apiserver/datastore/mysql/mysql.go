@@ -3,33 +3,44 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore"
+	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore/datainterface"
+	"github.com/BooeZhang/gin-layout/pkg/log/sqlhook"
 	"os"
 	"sync"
 
 	"github.com/BooeZhang/gin-layout/internal/apiserver/model"
-	"github.com/BooeZhang/gin-layout/internal/pkg/options"
+	"github.com/BooeZhang/gin-layout/internal/pkg/config"
 	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/BooeZhang/gin-layout/pkg/logger"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var (
-	mysqlFactory *datastore
+	mysqlFactory *_datastore
 	once         sync.Once
 )
 
-type datastore struct {
+type _datastore struct {
 	db *gorm.DB
 }
 
-func (ds *datastore) SysUser() ISysUser {
+func (ds *_datastore) SysUser() datainterface.ISysUser {
 	return newSysUser(ds)
 }
 
+// Close 关闭数据库
+func (ds *_datastore) Close() error {
+	db, err := ds.db.DB()
+	if err != nil {
+		return err
+	}
+	return db.Close()
+}
+
 // GetMysqlFactoryOr 使用给定的配置创建 mysql 工厂。
-func GetMysqlFactoryOr(opts *options.MySQLOptions) (*datastore, error) {
+func GetMysqlFactoryOr(opts *config.MySQLConfig) (datastore.Factory, error) {
 	if opts == nil && mysqlFactory == nil {
 		return nil, fmt.Errorf("failed to get mysql store fatory")
 	}
@@ -45,7 +56,7 @@ func GetMysqlFactoryOr(opts *options.MySQLOptions) (*datastore, error) {
 			true,
 			"Local")
 		dbIns, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-			Logger: logger.New(opts.LogLevel),
+			Logger: sqlhook.New(opts.LogLevel),
 		})
 
 		var sqlDB *sql.DB
@@ -66,7 +77,7 @@ func GetMysqlFactoryOr(opts *options.MySQLOptions) (*datastore, error) {
 			os.Exit(0)
 		}
 
-		mysqlFactory = &datastore{dbIns}
+		mysqlFactory = &_datastore{dbIns}
 	})
 
 	if mysqlFactory == nil || err != nil {
@@ -79,7 +90,7 @@ func GetMysqlFactoryOr(opts *options.MySQLOptions) (*datastore, error) {
 	return mysqlFactory, nil
 }
 
-func GetMysqlFactory() *datastore {
+func GetMysqlFactory() datastore.Factory {
 	return mysqlFactory
 }
 

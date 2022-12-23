@@ -1,4 +1,4 @@
-package options
+package config
 
 import (
 	"crypto/tls"
@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 )
 
-// EtcdOptions etcd配置项
-type EtcdOptions struct {
+// EtcdConfig etcd配置项
+type EtcdConfig struct {
 	Endpoints            []string `json:"endpoints"               mapstructure:"endpoints"`
 	Timeout              int      `json:"timeout"                 mapstructure:"timeout"`
 	RequestTimeout       int      `json:"request-timeout"         mapstructure:"request-timeout"`
@@ -25,17 +25,17 @@ type EtcdOptions struct {
 	Namespace            string   `json:"namespace"               mapstructure:"namespace"`
 }
 
-// NewEtcdOptions 创建默认的etcd配置项
-func NewEtcdOptions() *EtcdOptions {
-	return &EtcdOptions{
+// NewEtcdConfig 创建默认的etcd配置项
+func NewEtcdConfig() *EtcdConfig {
+	return &EtcdConfig{
 		Timeout:        5,
 		RequestTimeout: 2,
 		LeaseExpire:    5,
 	}
 }
 
-// Validate verifies flags passed to RedisOptions.
-func (o *EtcdOptions) Validate() []error {
+// Validate verifies flags passed to RedisConfig.
+func (o *EtcdConfig) Validate() []error {
 	errs := []error{}
 
 	if len(o.Endpoints) == 0 {
@@ -50,7 +50,7 @@ func (o *EtcdOptions) Validate() []error {
 }
 
 // GetEtcdTLSConfig returns etcd tls config.
-func (o *EtcdOptions) GetEtcdTLSConfig() (*tls.Config, error) {
+func (o *EtcdConfig) GetEtcdTLSConfig() (*tls.Config, error) {
 	var (
 		cert       tls.Certificate
 		certLoaded bool

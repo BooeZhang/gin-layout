@@ -1,7 +1,7 @@
-package options
+package config
 
-// RedisOptions redis配置项
-type RedisOptions struct {
+// RedisConfig redis配置项
+type RedisConfig struct {
 	Host                  string   `json:"host"                     mapstructure:"host"`
 	Port                  int      `json:"port"						mapstructure:"port"`
 	Addrs                 []string `json:"addrs"                    mapstructure:"addrs"`
@@ -17,9 +17,9 @@ type RedisOptions struct {
 	SSLInsecureSkipVerify bool     `json:"ssl-insecure-skip-verify" mapstructure:"ssl-insecure-skip-verify"`
 }
 
-// NewRedisOptions 创建一个默认的redis配置项.
-func NewRedisOptions() *RedisOptions {
-	return &RedisOptions{
+// NewRedisConfig 创建一个默认的redis配置项.
+func NewRedisConfig() *RedisConfig {
+	return &RedisConfig{
 		Host:                  "127.0.0.1",
 		Port:                  6379,
 		Addrs:                 []string{},

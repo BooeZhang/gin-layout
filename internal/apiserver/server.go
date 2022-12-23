@@ -3,28 +3,25 @@ package apiserver
 import (
 	"github.com/BooeZhang/gin-layout/internal/apiserver/router"
 	"github.com/BooeZhang/gin-layout/internal/pkg/app"
-	"github.com/BooeZhang/gin-layout/internal/pkg/options"
+	"github.com/BooeZhang/gin-layout/internal/pkg/config"
 	"github.com/BooeZhang/gin-layout/internal/pkg/server"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 )
 
 type apiServer struct {
-	redisOptions *options.RedisOptions
-	mysqlOptions *options.MySQLOptions
-	// etcdOptions      *genericoptions.EtcdOptions
-	gRPCAPIServer *grpcAPIServer
-	apiServer     *server.APIServer
+	redisConfig *config.RedisConfig
+	mysqlConfig *config.MySQLConfig
+	apiServer   *server.APIServer
 }
 
 // createAPIServer 创建api服务器
-func createAPIServer(opts *options.Options) (*apiServer, error) {
-	genericServer := server.New(opts)
+func createAPIServer(cnf *config.Config) (*apiServer, error) {
+	genericServer := server.New(cnf)
 
 	return &apiServer{
-		redisOptions: opts.RedisOptions,
-		apiServer:    genericServer,
-		mysqlOptions: opts.MySQLOptions,
-		// etcdOptions:      cfg.EtcdOptions,
+		redisConfig: cnf.RedisConfig,
+		apiServer:   genericServer,
+		mysqlConfig: cnf.MySQLConfig,
 	}, nil
 }
 
@@ -35,30 +32,31 @@ func (s *apiServer) Run() error {
 
 // NewApp 创建应用程序
 func NewApp() *app.App {
-	opts := options.DefaultOption()
+	cnf := config.DefaultConfig()
 	application := app.NewApp(
-		app.WithOptions(opts),
-		app.WithRunFunc(run(opts)),
+		app.WithOptions(cnf),
+		app.WithRunFunc(run(cnf)),
+		app.WithName("api-server"),
 	)
 
 	return application
 }
 
 // run 创建应用程序的回调函数
-func run(opts *options.Options) app.RunFunc {
+func run(cnf *config.Config) app.RunFunc {
 	return func() error {
-		log.Init(opts.Log)
+		log.Init(cnf.LogConfig)
 		defer log.Flush()
 
-		fn := func(opts *options.Options) error {
-			server, err := createAPIServer(opts)
+		fn := func(cnf *config.Config) error {
+			s, err := createAPIServer(cnf)
 			if err != nil {
 				return err
 			}
 
-			return server.Run()
+			return s.Run()
 		}
 
-		return fn(opts)
+		return fn(cnf)
 	}
 }

@@ -20,7 +20,7 @@ func NoCache(c *gin.Context) {
 }
 
 // Options is a middleware function that appends headers
-// for options requests and aborts then exits the middleware
+// for config requests and aborts then exits the middleware
 // chain and ends the request.
 func Options(c *gin.Context) {
 	if c.Request.Method != "OPTIONS" {
@@ -53,7 +53,7 @@ func defaultMiddlewares() map[string]gin.HandlerFunc {
 		"recovery":  gin.Recovery(),
 		"logger":    Logger(),
 		"secure":    Secure,
-		"options":   Options,
+		"config":    Options,
 		"nocache":   NoCache,
 		"cors":      Cors(),
 		"requestid": RequestID(),

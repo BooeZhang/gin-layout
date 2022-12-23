@@ -26,7 +26,6 @@ const (
 // Options 日志配置项。
 type Options struct {
 	OutputPaths       []string `json:"output-paths"       mapstructure:"output-paths"`
-	ErrorOutputPaths  []string `json:"error-output-paths" mapstructure:"error-output-paths"`
 	Level             string   `json:"level"              mapstructure:"level"`
 	Format            string   `json:"format"             mapstructure:"format"`
 	DisableCaller     bool     `json:"disable-caller"     mapstructure:"disable-caller"`
@@ -46,11 +45,10 @@ func NewOptions() *Options {
 		EnableColor:       false,
 		Development:       false,
 		OutputPaths:       []string{"stdout"},
-		ErrorOutputPaths:  []string{"stderr"},
 	}
 }
 
-// Validate validate the options fields.
+// Validate validate the config fields.
 func (o *Options) Validate() []error {
 	var errs []error
 
@@ -108,8 +106,7 @@ func (o *Options) Build() error {
 			EncodeCaller:   zapcore.ShortCallerEncoder,
 			EncodeName:     zapcore.FullNameEncoder,
 		},
-		OutputPaths:      o.OutputPaths,
-		ErrorOutputPaths: o.ErrorOutputPaths,
+		OutputPaths: o.OutputPaths,
 	}
 	logger, err := zc.Build(zap.AddStacktrace(zapcore.PanicLevel))
 	if err != nil {

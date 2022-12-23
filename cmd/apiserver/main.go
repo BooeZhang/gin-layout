@@ -1,18 +1,22 @@
 package main
 
 import (
-	"github.com/BooeZhang/gin-layout/internal/apiserver"
 	"math/rand"
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/BooeZhang/gin-layout/internal/apiserver"
 )
 
-func main() {
+func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
+
 	if len(os.Getenv("GOMAXPROCS")) == 0 {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
+}
 
+func main() {
 	apiserver.NewApp().Run()
 }

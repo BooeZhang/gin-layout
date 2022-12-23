@@ -3,7 +3,7 @@ package router
 import (
 	v1 "github.com/BooeZhang/gin-layout/internal/apiserver/controller/v1"
 	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore/mysql"
-	"github.com/BooeZhang/gin-layout/internal/pkg/options"
+	"github.com/BooeZhang/gin-layout/internal/pkg/config"
 	"github.com/BooeZhang/gin-layout/pkg/erroron"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/response"
@@ -19,9 +19,8 @@ func installMiddleware(g *gin.Engine) {
 }
 
 func installController(g *gin.Engine) *gin.Engine {
-	opts := options.GetOptions()
-	storeIns, _ := mysql.GetMysqlFactoryOr(opts.MySQLOptions)
-	//storeCache, _ := redis.GetRedisFactoryOr(opts.RedisOptions)
+	opts := config.GetConfig()
+	storeIns, _ := mysql.GetMysqlFactoryOr(opts.MySQLConfig)
 	jwtStrategy := newJWTAuth(storeIns)
 	errInit := jwtStrategy.MiddlewareInit()
 	if errInit != nil {

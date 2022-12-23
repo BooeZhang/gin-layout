@@ -208,7 +208,7 @@ var (
 	mu  sync.Mutex
 )
 
-// Init initializes logger with specified options.
+// Init initializes logger with specified config.
 func Init(opts *Options) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -254,10 +254,9 @@ func New(opts *Options) *zapLogger {
 			Initial:    100,
 			Thereafter: 100,
 		},
-		Encoding:         opts.Format,
-		EncoderConfig:    encoderConfig,
-		OutputPaths:      opts.OutputPaths,
-		ErrorOutputPaths: opts.ErrorOutputPaths,
+		Encoding:      opts.Format,
+		EncoderConfig: encoderConfig,
+		OutputPaths:   opts.OutputPaths,
 	}
 
 	var err error

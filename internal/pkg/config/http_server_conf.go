@@ -1,7 +1,7 @@
-package options
+package config
 
-// HttpServerOptions http服务配置项.
-type HttpServerOptions struct {
+// HttpServerConfig http服务配置项.
+type HttpServerConfig struct {
 	BindAddress string `json:"bind-address" mapstructure:"bind-address"`
 	// BindPort 设置 Listener 时被忽略，即使为 0 也会提供 HTTPS。
 	BindPort int `json:"bind-port"    mapstructure:"bind-port"`
@@ -17,9 +17,9 @@ type CertKey struct {
 	KeyFile  string `json:"private-key-file" mapstructure:"private-key-file"`
 }
 
-// NewHttpServerOptions 创建一个带有默认参数的http服务.
-func NewHttpServerOptions() *HttpServerOptions {
-	return &HttpServerOptions{
+// NewHttpServerConfig 创建一个带有默认参数的http服务.
+func NewHttpServerConfig() *HttpServerConfig {
+	return &HttpServerConfig{
 		BindAddress: "0.0.0.0",
 		BindPort:    8090,
 		Required:    true,

@@ -42,19 +42,10 @@ func PageOk(c *gin.Context, err error, data interface{}, count int64, page, page
 }
 
 func Error(c *gin.Context, err error, data interface{}) {
-	code, _, msg := erroron.DecodeErr(err)
-	if code != 0 && code < 10000 {
-		c.JSON(code, gin.H{
-			"code": code,
-			"msg":  msg,
-			"data": data,
-		})
-	} else {
-		c.JSON(code, gin.H{
-			"code": code,
-			"msg":  msg,
-			"data": data,
-		})
-	}
-	c.Abort()
+	code, httpCode, msg := erroron.DecodeErr(err)
+	c.AbortWithStatusJSON(httpCode, gin.H{
+		"code": code,
+		"msg":  msg,
+		"data": data,
+	})
 }

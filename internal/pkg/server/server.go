@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/BooeZhang/gin-layout/internal/pkg/options"
-	"github.com/BooeZhang/gin-layout/middleware"
+	middleware2 "github.com/BooeZhang/gin-layout/internal/apiserver/middleware"
+	"github.com/BooeZhang/gin-layout/internal/pkg/config"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -30,19 +30,17 @@ type APIServer struct {
 	ShutdownTimeout time.Duration
 
 	*gin.Engine
-	Healthz         bool
+	Health          bool
 	EnableMetrics   bool
 	EnableProfiling bool
-	// wrapper for gin.Engine
-
-	HttpServer *http.Server
+	HttpServer      *http.Server
 }
 
 // RunInfo 服务器运行配置。
 type runInfo struct {
 	BindAddress string
 	BindPort    int
-	CertKey     options.CertKey
+	CertKey     config.CertKey
 }
 
 // Address 将主机 IP 地址和主机端口号连接成一个地址字符串，例如：0.0.0.0:8443。
@@ -57,21 +55,21 @@ func InitGenericAPIServer(s *APIServer) {
 }
 
 // New 从给定的配置返回 GenericAPIServer 的新实例。
-func New(opts *options.Options) *APIServer {
+func New(cnf *config.Config) *APIServer {
 	s := &APIServer{
 		RunInfo: &runInfo{
-			BindAddress: opts.HttpServerOptions.BindAddress,
-			BindPort:    opts.HttpServerOptions.BindPort,
-			CertKey: options.CertKey{
-				CertFile: opts.HttpServerOptions.ServerCert.CertFile,
-				KeyFile:  opts.HttpServerOptions.ServerCert.KeyFile,
+			BindAddress: cnf.HttpServerConfig.BindAddress,
+			BindPort:    cnf.HttpServerConfig.BindPort,
+			CertKey: config.CertKey{
+				CertFile: cnf.HttpServerConfig.ServerCert.CertFile,
+				KeyFile:  cnf.HttpServerConfig.ServerCert.KeyFile,
 			},
 		},
-		Mode:            opts.ServerRunOptions.Mode,
-		Healthz:         opts.ServerRunOptions.Healthz,
-		Middlewares:     opts.ServerRunOptions.Middlewares,
-		EnableMetrics:   opts.FeatureOptions.EnableMetrics,
-		EnableProfiling: opts.FeatureOptions.EnableProfiling,
+		Mode:            cnf.ServerRunConfig.Mode,
+		Health:          cnf.ServerRunConfig.Health,
+		Middlewares:     cnf.ServerRunConfig.Middlewares,
+		EnableMetrics:   cnf.FeatureConfig.EnableMetrics,
+		EnableProfiling: cnf.FeatureConfig.EnableProfiling,
 		Engine:          gin.New(),
 	}
 
@@ -83,8 +81,8 @@ func New(opts *options.Options) *APIServer {
 // InstallAPIs 通用api。
 func (s *APIServer) InstallAPIs() {
 	// 添加健康检查api
-	if s.Healthz {
-		s.GET("/healthz", func(c *gin.Context) {
+	if s.Health {
+		s.GET("/health", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "OK"})
 		})
 	}
@@ -112,13 +110,13 @@ func (s *APIServer) Setup() {
 // InstallMiddlewares 安装通用中间件。
 func (s *APIServer) InstallMiddlewares() {
 	// necessary middlewares
-	s.Use(middleware.RequestID())
-	s.Use(middleware.Context())
-	// s.Use(limits.RequestSizeLimiter(10))
+	s.Use(gin.Recovery())
+	s.Use(middleware2.RequestID())
+	s.Use(middleware2.Context())
 
 	// install custom middlewares
 	for _, m := range s.Middlewares {
-		mw, ok := middleware.Middlewares[m]
+		mw, ok := middleware2.Middlewares[m]
 		if !ok {
 			log.Warnf("can not find middleware: %s", m)
 
@@ -133,11 +131,11 @@ func (s *APIServer) InstallMiddlewares() {
 // Run spawns the http server. It only returns when the port cannot be listened on initially.
 func (s *APIServer) Run() error {
 	s.HttpServer = &http.Server{
-		Addr:    s.RunInfo.Address(),
-		Handler: s,
-		// ReadTimeout:    10 * time.Second,
-		// WriteTimeout:   10 * time.Second,
-		// MaxHeaderBytes: 1 << 20,
+		Addr:           s.RunInfo.Address(),
+		Handler:        s,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
 	}
 	go func() {
 		key, cert := s.RunInfo.CertKey.KeyFile, s.RunInfo.CertKey.CertFile
@@ -157,7 +155,7 @@ func (s *APIServer) Run() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if s.Healthz {
+	if s.Health {
 		if err := s.ping(ctx); err != nil {
 			return err
 		}
@@ -176,9 +174,9 @@ func (s *APIServer) Run() error {
 
 // ping 服务器健康
 func (s *APIServer) ping(ctx context.Context) error {
-	url := fmt.Sprintf("http://%s/healthz", s.RunInfo.Address())
+	url := fmt.Sprintf("http://%s/health", s.RunInfo.Address())
 	if strings.Contains(s.RunInfo.Address(), "0.0.0.0") {
-		url = fmt.Sprintf("http://127.0.0.1:%d/healthz", s.RunInfo.BindPort)
+		url = fmt.Sprintf("http://127.0.0.1:%d/health", s.RunInfo.BindPort)
 	}
 
 	for {

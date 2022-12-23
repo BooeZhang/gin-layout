@@ -58,6 +58,7 @@ func LoggerWithWriter(out io.Writer, notlogged ...string) gin.HandlerFunc {
 }
 
 // LoggerWithConfig instance a Logger middleware with config.
+//
 //nolint:ifshort
 func LoggerWithConfig(conf gin.LoggerConfig) gin.HandlerFunc {
 	formatter := conf.Formatter
@@ -102,7 +103,7 @@ func LoggerWithConfig(conf gin.LoggerConfig) gin.HandlerFunc {
 		// Process request
 		c.Next()
 
-		// Log only when path is not being skipped
+		// LogConfig only when path is not being skipped
 		if _, ok := skip[path]; !ok {
 			param := gin.LogFormatterParams{
 				Request: c.Request,
