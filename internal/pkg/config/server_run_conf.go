@@ -2,7 +2,7 @@ package config
 
 // ServerRunConfig 服务通用的选项
 type ServerRunConfig struct {
-	Mode        string   `json:"mode"        mapstructure:"mode"`
+	Debug       bool     `json:"debug"        mapstructure:"debug"`
 	Health      bool     `json:"health"     mapstructure:"health"`
 	Middlewares []string `json:"middlewares" mapstructure:"middlewares"`
 }
@@ -10,7 +10,7 @@ type ServerRunConfig struct {
 // NewServerRunConfig 使用默认参数创建.
 func NewServerRunConfig() *ServerRunConfig {
 	return &ServerRunConfig{
-		Mode:        "debug",
+		Debug:       true,
 		Health:      true,
 		Middlewares: []string{},
 	}

@@ -1,6 +1,6 @@
 [server]
 # 运行模式
-mode = "debug"
+debug = true
 # 是否开启健康检查
 health = true
 # 启用的中间件
@@ -13,9 +13,8 @@ bind-address = "127.0.0.1"
 bind-port = 9080
 # https 配置
 [http.tls]
-cert-key=""
-cert-dir=""
-pair-name=""
+cert-file = "lll"
+private-key-file = ""
 
 [grpc]
 bind-address = "127.0.0.1"

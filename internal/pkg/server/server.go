@@ -23,7 +23,7 @@ import (
 // APIServer 通用的api服务.
 type APIServer struct {
 	Middlewares []string
-	Mode        string
+	Debug       bool
 	RunInfo     *runInfo
 
 	// ShutdownTimeout 优雅关闭
@@ -65,7 +65,7 @@ func New(cnf *config.Config) *APIServer {
 				KeyFile:  cnf.HttpServerConfig.ServerCert.KeyFile,
 			},
 		},
-		Mode:            cnf.ServerRunConfig.Mode,
+		Debug:           cnf.ServerRunConfig.Debug,
 		Health:          cnf.ServerRunConfig.Health,
 		Middlewares:     cnf.ServerRunConfig.Middlewares,
 		EnableMetrics:   cnf.FeatureConfig.EnableMetrics,
@@ -101,7 +101,10 @@ func (s *APIServer) InstallAPIs() {
 }
 
 func (s *APIServer) Setup() {
-	gin.SetMode(s.Mode)
+	if !s.Debug {
+		gin.SetMode(gin.ReleaseMode)
+
+	}
 	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
 		log.Infof("%-6s %-s --> %s (%d handlers)", httpMethod, absolutePath, handlerName, nuHandlers)
 	}

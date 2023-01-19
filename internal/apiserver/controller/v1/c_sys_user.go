@@ -10,16 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type SysUserContorller struct {
+type SysUserController struct {
 	srv srvv1.Service
 }
 
-func NewSysUserContorller(store datastore.Factory) *SysUserContorller {
-	return &SysUserContorller{srv: srvv1.NewService(store)}
+func NewSysUserController(store datastore.Factory) *SysUserController {
+	return &SysUserController{srv: srvv1.NewService(store)}
 }
 
 // Create add new user to the storage.
-func (su *SysUserContorller) Create(c *gin.Context) {
+func (su *SysUserController) Create(c *gin.Context) {
 	log.L(c).Info("user create function called.")
 
 	var r model.SysUserModel
