@@ -31,12 +31,12 @@ func (s *apiServer) Run() error {
 }
 
 // NewApp 创建应用程序
-func NewApp() *app.App {
+func NewApp(baseName string) *app.App {
 	cnf := config.DefaultConfig()
 	application := app.NewApp(
 		app.WithOptions(cnf),
 		app.WithRunFunc(run(cnf)),
-		app.WithName("api-server"),
+		app.WithName(baseName),
 	)
 
 	return application

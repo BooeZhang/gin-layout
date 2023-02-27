@@ -18,5 +18,5 @@ func init() {
 }
 
 func main() {
-	apiserver.NewApp().Run()
+	apiserver.NewApp("api-server").Run()
 }
