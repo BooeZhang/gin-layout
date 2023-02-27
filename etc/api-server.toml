@@ -13,9 +13,8 @@ bind-address = "0.0.0.0"
 bind-port = 9080
 # https 配置
 [http.tls]
-cert-key=""
-cert-dir=""
-pair-name=""
+cert-file = "lll"
+private-key-file = ""
 
 [grpc]
 bind-address = "127.0.0.1"

@@ -8,26 +8,10 @@ import (
 	"github.com/BooeZhang/gin-layout/pkg/log"
 )
 
-type apiServer struct {
+type mainServer struct {
 	redisConfig *config.RedisConfig
 	mysqlConfig *config.MySQLConfig
 	apiServer   *server.APIServer
-}
-
-// createAPIServer 创建api服务器
-func createAPIServer(cnf *config.Config) (*apiServer, error) {
-	genericServer := server.New(cnf)
-
-	return &apiServer{
-		redisConfig: cnf.RedisConfig,
-		apiServer:   genericServer,
-		mysqlConfig: cnf.MySQLConfig,
-	}, nil
-}
-
-func (s *apiServer) Run() error {
-	router.InitRouter(s.apiServer.Engine)
-	return s.apiServer.Run()
 }
 
 // NewApp 创建应用程序
@@ -49,7 +33,7 @@ func run(cnf *config.Config) app.RunFunc {
 		defer log.Flush()
 
 		fn := func(cnf *config.Config) error {
-			s, err := createAPIServer(cnf)
+			s, err := createMainServer(cnf)
 			if err != nil {
 				return err
 			}
@@ -59,4 +43,20 @@ func run(cnf *config.Config) app.RunFunc {
 
 		return fn(cnf)
 	}
+}
+
+// createMainServer 创建主服务
+func createMainServer(cnf *config.Config) (*mainServer, error) {
+	genericServer := server.New(cnf)
+
+	return &mainServer{
+		redisConfig: cnf.RedisConfig,
+		apiServer:   genericServer,
+		mysqlConfig: cnf.MySQLConfig,
+	}, nil
+}
+
+func (s *mainServer) Run() error {
+	router.InitRouter(s.apiServer.Engine)
+	return s.apiServer.Run()
 }

@@ -101,9 +101,7 @@ func (s *APIServer) InstallAPIs() {
 }
 
 func (s *APIServer) Setup() {
-	if s.Debug {
-		gin.SetMode(gin.DebugMode)
-	} else {
+	if !s.Debug {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	gin.DebugPrintRouteFunc = func(httpMethod, absolutePath, handlerName string, nuHandlers int) {
