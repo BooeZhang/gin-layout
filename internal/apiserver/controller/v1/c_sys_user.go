@@ -15,7 +15,7 @@ type SysUserController struct {
 }
 
 func NewSysUserController(store datastore.Factory) *SysUserController {
-	return &SysUserController{srv: srvv1.NewService(store)}
+	return &SysUserController{srv: srvv1.NewService(store, nil)}
 }
 
 // Create add new user to the storage.

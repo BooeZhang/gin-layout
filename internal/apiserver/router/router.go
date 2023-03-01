@@ -34,8 +34,8 @@ func installController(g *gin.Engine) *gin.Engine {
 		response.Ok(c, erroron.ErrNotFound, nil)
 	})
 	{
-		sysuserController := v1.NewSysUserController(storeIns)
-		g.POST("add", sysuserController.Create)
+		sysUserController := v1.NewSysUserController(storeIns)
+		g.POST("add", sysUserController.Create)
 	}
 
 	return g

@@ -3,24 +3,23 @@ package v1
 import (
 	"context"
 
-	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore"
 	"github.com/BooeZhang/gin-layout/internal/apiserver/model"
 )
 
-// SysUserv 用户资源接口
-type SysUserv interface {
+// SysUserSrv 用户资源接口
+type SysUserSrv interface {
 	Create(ctx context.Context, user *model.SysUserModel) error
 	Update(ctx context.Context, user *model.SysUserModel) error
 }
 
 type sysUserService struct {
-	store datastore.Factory
+	*serviceContext
 }
 
-var _ SysUserv = (*sysUserService)(nil)
+var _ SysUserSrv = (*sysUserService)(nil)
 
-func newSysUserService(srv *service) *sysUserService {
-	return &sysUserService{store: srv.store}
+func newSysUserService(srv *serviceContext) *sysUserService {
+	return &sysUserService{srv}
 }
 
 func (su *sysUserService) Create(ctx context.Context, user *model.SysUserModel) error {

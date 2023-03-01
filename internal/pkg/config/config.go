@@ -73,7 +73,6 @@ func AddConfigFlag(basename string, fs *pflag.FlagSet) {
 			os.Exit(1)
 		}
 
-		fmt.Println(viper.AllSettings())
 		if err := viper.Unmarshal(&c); err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "Error: Unable to decode into struct file(%s): %v\n", cfgFile, err)
 			os.Exit(1)

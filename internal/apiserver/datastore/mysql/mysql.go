@@ -9,7 +9,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/BooeZhang/gin-layout/internal/apiserver/model"
 	"github.com/BooeZhang/gin-layout/internal/pkg/config"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"go.uber.org/zap"
@@ -26,7 +25,11 @@ type _datastore struct {
 	db *gorm.DB
 }
 
-func (ds *_datastore) SysUser() datainterface.ISysUser {
+func (ds *_datastore) GetDB() *gorm.DB {
+	return ds.db
+}
+
+func (ds *_datastore) SysUser() datainterface.SysUserData {
 	return newSysUser(ds)
 }
 
@@ -83,22 +86,7 @@ func GetMysqlFactoryOr(opts *config.MySQLConfig) (datastore.Factory, error) {
 	if mysqlFactory == nil || err != nil {
 		return nil, fmt.Errorf("failed to get mysql store fatory, mysqlFactory: %+v, error: %w", mysqlFactory, err)
 	}
-	err = migrateDatabase(dbIns)
-	if err != nil {
-		log.Error(err.Error())
-	}
+
 	return mysqlFactory, nil
 }
 
-func GetMysqlFactory() datastore.Factory {
-	return mysqlFactory
-}
-
-func migrateDatabase(db *gorm.DB) error {
-	if err := db.AutoMigrate(
-		new(model.SysUserModel),
-	); err != nil {
-		return fmt.Errorf("migrate user model failed: %w", err)
-	}
-	return nil
-}
