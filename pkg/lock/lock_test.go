@@ -2,7 +2,7 @@ package lock
 
 import (
 	"github.com/BooeZhang/gin-layout/internal/pkg/config"
-	"github.com/BooeZhang/gin-layout/pkg/cache"
+	"github.com/BooeZhang/gin-layout/store/redis"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
@@ -10,9 +10,9 @@ import (
 )
 
 func TestLock(t *testing.T) {
-	cache.ConnectToRedis(config.NewRedisConfig())
+	redis.ConnectToRedis(config.NewRedisConfig())
 	ctx := context.Background()
-	l := NewRedisLock(cache.Redis, "test_lock")
+	l := NewRedisLock(redis.Redis, "test_lock")
 	ok, err := l.Lock(ctx, 10*time.Second)
 	if err != nil {
 		t.Error(err)
@@ -32,11 +32,11 @@ func TestLock(t *testing.T) {
 }
 
 func TestLockWithTimeout(t *testing.T) {
-	cache.ConnectToRedis(config.NewRedisConfig())
+	redis.ConnectToRedis(config.NewRedisConfig())
 
 	t.Run("should lock/unlock success", func(t *testing.T) {
 		ctx := context.Background()
-		lock1 := NewRedisLock(cache.Redis, "lock2")
+		lock1 := NewRedisLock(redis.Redis, "lock2")
 		ok, err := lock1.Lock(ctx, 2*time.Second)
 		assert.Nil(t, err)
 		assert.True(t, ok)
@@ -48,7 +48,7 @@ func TestLockWithTimeout(t *testing.T) {
 
 	t.Run("should unlock failed", func(t *testing.T) {
 		ctx := context.Background()
-		lock2 := NewRedisLock(cache.Redis, "lock3")
+		lock2 := NewRedisLock(redis.Redis, "lock3")
 		ok, err := lock2.Lock(ctx, 2*time.Second)
 		assert.Nil(t, err)
 		assert.True(t, ok)

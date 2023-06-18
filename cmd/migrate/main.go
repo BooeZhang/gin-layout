@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore/mysql"
-	"github.com/BooeZhang/gin-layout/internal/apiserver/model"
 	"github.com/BooeZhang/gin-layout/internal/pkg/config"
+	"github.com/BooeZhang/gin-layout/model"
 )
 
 func main() {

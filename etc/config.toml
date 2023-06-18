@@ -1,0 +1,78 @@
+[server]
+# 运行模式
+debug = true
+# 是否开启健康检查
+health = true
+# 启用的中间件
+middlewares = ["logger", "cors"]
+
+[http]
+# http 绑定地址
+bind-address = "0.0.0.0"
+#  http 绑定端口
+bind-port = 9080
+# https 配置
+[http.tls]
+cert-file = ""
+private-key-file = ""
+
+[grpc]
+bind-address = "127.0.0.1"
+bind-port = 9999
+max-msg-size = 100000
+
+[mysql]
+# 连接地址
+host = "127.0.0.1"
+# 用户名
+username = "root"
+# 密码
+password = "root"
+# 数据库名
+database = "candle-light"
+# 最大空闲连接数
+max-idle-connections = 30
+# 最大打开连接数
+max-open-connections = 30
+# 最大连接重用时长
+max-connection-life-time = 30
+# 是否开启sql日志打印
+log-level = 4
+
+[redis]
+# 连接地址
+host = "127.0.0.1"
+# 连接端口
+port = 6379
+# 数据库编号
+database = 15
+
+[jwt]
+Realm = "test zone"
+key = "secret key"
+timeout = 1
+max-refresh = 2
+
+[log]
+# 日志输出路径
+output-paths = ["stderr"]
+# 日志级别
+level = "INFO"
+# 日志输出格式 json 和 console
+format = "console"
+# 是否禁用输出行号
+disable-caller = false
+# 是否禁用输出错误堆栈
+disable-stacktrace = true
+# 是否禁用颜色输出
+enable-color = true
+# 是否禁用开发模式
+development = true
+# 日志标签名
+name = ""
+
+[feature]
+# 是否禁用性能分析
+profiling = false
+# 是否禁用监控
+enable-metrics = false
