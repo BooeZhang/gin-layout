@@ -20,6 +20,7 @@ type Config struct {
 	HttpServerConfig *HttpServerConfig `json:"http"     mapstructure:"http"`
 	MySQLConfig      *MySQLConfig      `json:"mysql"    mapstructure:"mysql"`
 	RedisConfig      *RedisConfig      `json:"redis"    mapstructure:"redis"`
+	MongoConfig      *MongoConf        `json:"mongo"    mapstructure:"mongo"`
 	JwtConfig        *JwtConfig        `json:"jwt"      mapstructure:"jwt"`
 	LogConfig        *log.Options      `json:"log"      mapstructure:"log"`
 	FeatureConfig    *FeatureConfig    `json:"feature"  mapstructure:"feature"`
