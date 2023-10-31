@@ -1,20 +1,21 @@
-[server]
+[http]
 # 运行模式
 debug = true
 # 是否开启健康检查
 health = true
 # 启用的中间件
 middlewares = ["logger", "cors"]
-
-[http]
 # http 绑定地址
 bind-address = "0.0.0.0"
 #  http 绑定端口
 bind-port = 9080
 # https 配置
-[http.tls]
 cert-file = ""
 private-key-file = ""
+# 是否启用性能分析
+enable-profiling = false
+# 是否启用监控
+enable-metrics = false
 
 [grpc]
 bind-address = "127.0.0.1"
@@ -71,8 +72,3 @@ development = true
 # 日志标签名
 name = ""
 
-[feature]
-# 是否禁用性能分析
-profiling = false
-# 是否禁用监控
-enable-metrics = false

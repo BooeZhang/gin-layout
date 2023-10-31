@@ -3,9 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/BooeZhang/gin-layout/config"
-	"github.com/BooeZhang/gin-layout/internal/server"
 	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/BooeZhang/gin-layout/route"
+	"github.com/BooeZhang/gin-layout/server"
 	"github.com/BooeZhang/gin-layout/store/mysql"
 	"github.com/BooeZhang/gin-layout/store/redis"
 	"github.com/fatih/color"
@@ -25,19 +24,18 @@ func printWorkingDir() {
 }
 
 func main() {
-	configFile := flag.String("conf", "", "specify config file")
+	configFile := flag.String("c", "", "-c 选项用于指定要使用的配置文件")
 	flag.Parse()
 
 	config.InitConfig(*configFile)
+	printWorkingDir()
 	cf := config.GetConfig()
 
 	log.Init(cf.LogConfig)
 	mysql.InitMysql(cf.MySQLConfig)
 	redis.InitRedis(cf.RedisConfig)
 
-	printWorkingDir()
-
-	app := server.NewWebServer(config.GetConfig())
-	route.InitRouter(app.Engine)
+	app := server.NewHttpServer(config.GetConfig())
+	app.LoadRouter(initRouter(mysql.GetDB(), redis.GetRedis()))
 	log.Fatal(app.Run().Error())
 }

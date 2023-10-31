@@ -15,7 +15,6 @@ var (
 
 // Config 配置选项
 type Config struct {
-	ServerRunConfig  *ServerRunConfig  `json:"server"   mapstructure:"server"`
 	GRPCConfig       *GRPCConfig       `json:"grpc"     mapstructure:"grpc"`
 	HttpServerConfig *HttpServerConfig `json:"http"     mapstructure:"http"`
 	MySQLConfig      *MySQLConfig      `json:"mysql"    mapstructure:"mysql"`
@@ -23,7 +22,6 @@ type Config struct {
 	MongoConfig      *MongoConf        `json:"mongo"    mapstructure:"mongo"`
 	JwtConfig        *JwtConfig        `json:"jwt"      mapstructure:"jwt"`
 	LogConfig        *log.Options      `json:"log"      mapstructure:"log"`
-	FeatureConfig    *FeatureConfig    `json:"feature"  mapstructure:"feature"`
 }
 
 // InitConfig 初始化配置

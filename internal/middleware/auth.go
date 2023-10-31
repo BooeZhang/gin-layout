@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/base64"
 	"github.com/BooeZhang/gin-layout/config"
-	"github.com/BooeZhang/gin-layout/model"
+	"github.com/BooeZhang/gin-layout/internal/model"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/response"
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -70,8 +70,8 @@ func authenticator(db *gorm.DB) func(c *gin.Context) (interface{}, error) {
 			return "", jwt.ErrFailedAuthentication
 		}
 
-		var user model.SysUser
-		err = db.Model(&model.SysUser{}).Where("user_name=?", login.Username).First(&user).Error
+		var user model.User
+		err = db.Model(&model.User{}).Where("user_name=?", login.Username).First(&user).Error
 		if err != nil {
 			log.Errorf("get user information failed: %s", err.Error())
 
@@ -108,7 +108,7 @@ func refreshResponse() func(c *gin.Context, code int, token string, expire time.
 func payloadFunc() func(data interface{}) jwt.MapClaims {
 	return func(data interface{}) jwt.MapClaims {
 		claims := jwt.MapClaims{}
-		if u, ok := data.(model.SysUser); ok {
+		if u, ok := data.(model.User); ok {
 			claims[jwt.IdentityKey] = u.UserName
 			claims["id"] = u.ID
 			claims["user_name"] = u.UserName

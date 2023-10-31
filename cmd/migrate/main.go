@@ -2,17 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/BooeZhang/gin-layout/internal/apiserver/datastore/mysql"
-	"github.com/BooeZhang/gin-layout/internal/pkg/config"
-	"github.com/BooeZhang/gin-layout/model"
+	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/internal/model"
+	"github.com/BooeZhang/gin-layout/store/mysql"
 )
 
 func main() {
 	opts := config.GetConfig()
-	factory, _ := mysql.GetMysqlFactoryOr(opts.MySQLConfig)
-	db := factory.GetDB()
+	mysql.InitMysql(opts.MySQLConfig)
+	db := mysql.GetDB()
 	if err := db.AutoMigrate(
-		new(model.SysUserModel),
+		new(model.User),
 	); err != nil {
 		fmt.Printf("migrate db failed: %s", err)
 	}
