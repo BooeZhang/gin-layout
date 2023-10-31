@@ -177,15 +177,15 @@ func (h *HttpServer) Run() error {
 			return err
 		}
 		log.Infof("Server on %s stopped", h.address())
+	} else {
+		log.Infof("Start to listening the incoming requests on https address: %s", h.address())
+		if err := h.HttpServer.ListenAndServeTLS(cert, key); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		log.Infof("Server on %s stopped", h.address())
 	}
-	log.Infof("Start to listening the incoming requests on https address: %s", h.address())
 
-	if err := h.HttpServer.ListenAndServeTLS(cert, key); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return err
-	}
-	log.Infof("Server on %s stopped", h.address())
-
-	return nil
+	return errors.New("service shutdown")
 }
 
 // ping 服务器健康
