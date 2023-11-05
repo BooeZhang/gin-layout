@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/pkg/auth"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/server"
 	"github.com/BooeZhang/gin-layout/store/mysql"
@@ -34,6 +35,7 @@ func main() {
 	log.Init(cf.LogConfig)
 	mysql.InitMysql(cf.MySQLConfig)
 	redis.InitRedis(cf.RedisConfig)
+	auth.InitAuth(cf)
 
 	app := server.NewHttpServer(config.GetConfig())
 	app.LoadRouter(initRouter(mysql.GetDB(), redis.GetRedis()))

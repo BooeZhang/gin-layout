@@ -22,6 +22,7 @@ type Config struct {
 	MongoConfig      *MongoConf        `json:"mongo"    mapstructure:"mongo"`
 	JwtConfig        *JwtConfig        `json:"jwt"      mapstructure:"jwt"`
 	LogConfig        *log.Options      `json:"log"      mapstructure:"log"`
+	CasbinConf       *CasbinConf       `json:"casbin" mapstructure:"casbin"`
 }
 
 // InitConfig 初始化配置

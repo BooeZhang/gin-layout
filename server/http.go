@@ -47,6 +47,9 @@ func (h *HttpServer) address() string {
 
 // InitGenericAPIServer 初始化 API 服务
 func InitGenericAPIServer(s *HttpServer) {
+	if s.Debug {
+		s.SetupSwagger()
+	}
 	s.Setup()
 	s.InstallMiddlewares()
 	s.InstallAPIs()
@@ -218,4 +221,10 @@ func (h *HttpServer) ping(ctx context.Context) error {
 		default:
 		}
 	}
+}
+
+// SetupSwagger 启用swagger
+func (h *HttpServer) SetupSwagger() {
+	//docs.SwaggerInfo.BasePath = "/api/v1"
+	//h.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

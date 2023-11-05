@@ -18,7 +18,7 @@ type loginInfo struct {
 	Password string `form:"password" json:"password" binding:"required"`
 }
 
-func NewJWTAuth(db *gorm.DB, cf *config.JwtConfig) *jwt.GinJWTMiddleware {
+func NewJWT(db *gorm.DB, cf *config.JwtConfig) *jwt.GinJWTMiddleware {
 	ginJwt, _ := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:            cf.Realm,
 		SigningAlgorithm: "HS256",

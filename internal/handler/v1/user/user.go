@@ -17,12 +17,25 @@ func NewUserHandler(_userSrv user.Service) *Handler {
 	}
 }
 
+// GetUserInfo
+// @Summary 获取用户信息
+// @Schemes
+// @Description 获取用户信息
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Success 200 {string} Helloworld
+// @Router /user/ [get]
 func (uh *Handler) GetUserInfo(c *gin.Context) {
 	uid := c.GetInt64("user_id")
-	user, err := uh.userSrv.GetById(c, uid)
+	_user, err := uh.userSrv.GetById(c, uid)
 	if err != nil {
 		response.Error(c, err, nil)
 	} else {
-		response.Ok(c, nil, user)
+		response.Ok(c, nil, _user)
 	}
+}
+
+func (uh *Handler) AddAuth(c *gin.Context) {
+
 }
