@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/docs"
 	middleware2 "github.com/BooeZhang/gin-layout/internal/middleware"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"net"
 	"net/http"
@@ -225,6 +228,6 @@ func (h *HttpServer) ping(ctx context.Context) error {
 
 // SetupSwagger 启用swagger
 func (h *HttpServer) SetupSwagger() {
-	//docs.SwaggerInfo.BasePath = "/api/v1"
-	//h.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	h.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }
