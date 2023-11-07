@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"io"
 	"time"
 )
@@ -20,7 +20,7 @@ func RequestID() gin.HandlerFunc {
 		rid := c.GetHeader(XRequestIDKey)
 
 		if rid == "" {
-			rid = uuid.NewV4().String()
+			rid = uuid.New().String()
 			c.Request.Header.Set(XRequestIDKey, rid)
 			c.Set(XRequestIDKey, rid)
 		}

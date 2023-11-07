@@ -6,13 +6,14 @@ import (
 	"github.com/BooeZhang/gin-layout/internal/repo"
 	v1 "github.com/BooeZhang/gin-layout/internal/service/v1"
 	"github.com/BooeZhang/gin-layout/pkg/erroron"
+	"github.com/BooeZhang/gin-layout/pkg/schema"
 )
 
 var _ Service = (*serviceImpl)(nil)
 
 // Service 定义用户操作服务接口
 type Service interface {
-	// Deprecated: 使用GetByIdentification替代
+	Login(ctx context.Context, name, pwd string) (*schema.LoginRes, error)
 	GetByName(ctx context.Context, name string) (*model.User, error)
 	GetById(ctx context.Context, uid int64) (*model.User, error)
 	GetByMobile(ctx context.Context, ID string) (*model.User, error)

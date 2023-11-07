@@ -1,3 +1,14 @@
+definitions:
+  schema.LoginReq:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
 info:
   contact: {}
 paths:
@@ -14,6 +25,28 @@ paths:
           schema:
             type: string
       summary: 获取用户信息
+      tags:
+      - 用户
+  /user/login/:
+    post:
+      consumes:
+      - application/json
+      description: 登录
+      parameters:
+      - description: .
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/schema.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: body
+      summary: 登录
       tags:
       - 用户
 swagger: "2.0"

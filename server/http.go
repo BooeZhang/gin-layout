@@ -228,6 +228,6 @@ func (h *HttpServer) ping(ctx context.Context) error {
 
 // SetupSwagger 启用swagger
 func (h *HttpServer) SetupSwagger() {
-	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.BasePath = "/v1"
 	h.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

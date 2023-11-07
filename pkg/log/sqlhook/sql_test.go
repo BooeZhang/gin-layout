@@ -12,8 +12,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/jinzhu/now"
 	"gorm.io/gorm/logger"
 )
 
@@ -44,7 +44,7 @@ func TestExplainSQL(t *testing.T) {
 	type role string
 	type password []byte
 	var (
-		tt     = now.MustParse("2020-02-23 11:10:10")
+		tt     = time.Now()
 		myrole = role("admin")
 		pwd    = password([]byte("pass"))
 		jsVal  = []byte(`{"Name":"test","Val":"test"}`)
