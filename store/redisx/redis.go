@@ -1,4 +1,4 @@
-package redis
+package redisx
 
 import (
 	"context"
@@ -19,7 +19,7 @@ var (
 	once sync.Once
 )
 
-// InitRedis 初始化 redis
+// InitRedis 初始化 redisx
 func InitRedis(cf *config.RedisConfig) {
 	ConnectToRedis(cf)
 }
@@ -27,7 +27,7 @@ func InitRedis(cf *config.RedisConfig) {
 // ConnectToRedis 连接redis
 func ConnectToRedis(cnf *config.RedisConfig) {
 	if cnf == nil {
-		log.Error("failed to get redis store fatory")
+		log.Error("failed to get redisx store fatory")
 		os.Exit(1)
 	}
 	log.Debug("Creating new Redis connection pool")
@@ -77,21 +77,21 @@ func ConnectToRedis(cnf *config.RedisConfig) {
 
 		pong, err := client.Ping(context.Background()).Result()
 		if err != nil {
-			log.Error("redis connect ping failed, err:", zap.Any("err", err))
+			log.Error("redisx connect ping failed, err:", zap.Any("err", err))
 			os.Exit(1)
 		} else {
-			log.Info("redis connect ping response:", zap.String("pong", pong))
+			log.Info("redisx connect ping response:", zap.String("pong", pong))
 		}
 		r = client
 	})
 
 	if r == nil {
-		log.Errorf("failed to get redis store fatory, redisFactory: %+v", r)
+		log.Errorf("failed to get redisx store fatory, redisFactory: %+v", r)
 		os.Exit(1)
 	}
 }
 
-// GetRedis 获取 redis session
+// GetRedis 获取 redisx session
 func GetRedis() redis.UniversalClient {
 	return r
 }

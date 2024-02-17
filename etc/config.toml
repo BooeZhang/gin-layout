@@ -8,7 +8,7 @@ middlewares = ["logger", "cors"]
 # http 绑定地址
 bind-address = "0.0.0.0"
 #  http 绑定端口
-bind-port = 9080
+bind-port = 8090
 # https 配置
 cert-file = ""
 private-key-file = ""
@@ -40,11 +40,13 @@ max-connection-life-time = 30
 # 是否开启sql日志打印
 log-level = 4
 
+[mongo]
+uri = "mongodb://127.0.0.1:27017/test?authSource=admin"
+poolLimit = 500
+
 [redis]
 # 连接地址
-host = "127.0.0.1"
-# 连接端口
-port = 6379
+addr = ["127.0.0.1:6579"]
 # 数据库编号
 database = 15
 

@@ -2,12 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/core"
+	"github.com/BooeZhang/gin-layout/internal/model"
 	"github.com/BooeZhang/gin-layout/pkg/auth"
 	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/BooeZhang/gin-layout/server"
-	"github.com/BooeZhang/gin-layout/store/mysql"
-	"github.com/BooeZhang/gin-layout/store/redis"
+	"github.com/BooeZhang/gin-layout/store/mysqlx"
 	"github.com/fatih/color"
 	"github.com/spf13/viper"
 	"os"
@@ -33,11 +34,26 @@ func main() {
 	cf := config.GetConfig()
 
 	log.Init(cf.LogConfig)
-	mysql.InitMysql(cf.MySQLConfig)
-	redis.InitRedis(cf.RedisConfig)
+	st := core.NewStorageWithConfig(*cf)
+	defer func() {
+		st.Close()
+	}()
+
+	migrateDB(st)
+	mysqlx.CreateSuperUser(st.GetMySQL(), cf.MySQLConfig)
 	auth.InitAuth(cf)
 
-	app := server.NewHttpServer(config.GetConfig())
-	app.LoadRouter(initRouter(mysql.GetDB(), redis.GetRedis()))
-	log.Fatal(app.Run().Error())
+	app := core.NewHttpServer(config.GetConfig())
+	app.LoadRouter(initRouter(st))
+	app.Run().Error()
+}
+
+func migrateDB(st *core.StoreImpl) {
+	if err := st.GetMySQL().AutoMigrate(
+		new(model.SysUser),
+	); err != nil {
+		fmt.Printf("migrate db failed: %s", err)
+		os.Exit(1)
+	}
+	fmt.Println("migrate db completed...")
 }

@@ -8,12 +8,12 @@ import (
 
 // Handler 用户业务handler
 type Handler struct {
-	userSrv user.Service
+	svc user.Service
 }
 
 func NewUserHandler(_userSrv user.Service) *Handler {
 	return &Handler{
-		userSrv: _userSrv,
+		svc: _userSrv,
 	}
 }
 
@@ -28,7 +28,7 @@ func NewUserHandler(_userSrv user.Service) *Handler {
 // @Router /user/ [get]
 func (uh *Handler) GetUserInfo(c *gin.Context) {
 	uid := c.GetInt64("user_id")
-	_user, err := uh.userSrv.GetById(c, uid)
+	_user, err := uh.svc.GetById(c, uid)
 	if err != nil {
 		response.Error(c, err, nil)
 	} else {

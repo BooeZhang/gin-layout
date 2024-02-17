@@ -12,4 +12,7 @@ type MySQLConfig struct {
 	MaxOpenConnections    int           `json:"max-open-connections,omitempty"     mapstructure:"max-open-connections"`
 	MaxConnectionLifeTime time.Duration `json:"max-connection-life-time,omitempty" mapstructure:"max-connection-life-time"`
 	LogLevel              int           `json:"log-level"                          mapstructure:"log-level"`
+
+	SuperUser    string `json:"super-user" mapstructure:"super-user"`
+	SuperUserPwd string `json:"super-user-pwd" mapstructure:"super-user-pwd"`
 }

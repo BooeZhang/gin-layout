@@ -19,10 +19,10 @@ type Config struct {
 	HttpServerConfig *HttpServerConfig `json:"http"     mapstructure:"http"`
 	MySQLConfig      *MySQLConfig      `json:"mysql"    mapstructure:"mysql"`
 	RedisConfig      *RedisConfig      `json:"redis"    mapstructure:"redis"`
-	MongoConfig      *MongoConf        `json:"mongo"    mapstructure:"mongo"`
+	MongoConfig      *MongoConf        `json:"mongodb"  mapstructure:"mongodb"`
 	JwtConfig        *JwtConfig        `json:"jwt"      mapstructure:"jwt"`
 	LogConfig        *log.Options      `json:"log"      mapstructure:"log"`
-	CasbinConf       *CasbinConf       `json:"casbin" mapstructure:"casbin"`
+	CasbinConf       *CasbinConf       `json:"casbin"   mapstructure:"casbin"`
 }
 
 // InitConfig 初始化配置

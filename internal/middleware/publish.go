@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Publish publish a redis event to specified redis channel when some action occurred.
+// Publish publish a redisx event to specified redisx channel when some action occurred.
 func Publish() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()

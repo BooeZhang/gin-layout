@@ -1,9 +1,10 @@
-package mysql
+package mysqlx
 
 import (
 	"database/sql"
 	"fmt"
 	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/internal/model"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/log/sqlhook"
 	"os"
@@ -80,7 +81,7 @@ func DialToMysql(op *config.MySQLConfig) {
 	})
 
 	if mysqlDB == nil || err != nil {
-		log.Errorf("mysql connection failure, error: %s", err)
+		log.Errorf("mysqlx connection failure, error: %s", err)
 		os.Exit(1)
 	}
 }
@@ -105,15 +106,28 @@ func createDB(opts *config.MySQLConfig) error {
 		return err
 	}
 	re, err := db.Exec(createSql)
-	n, _ := re.RowsAffected()
-	// 第一次创建数据库时才会初始化超级用户
-	if n == 1 {
-		createSuperUser(db)
-	}
+	_, err = re.RowsAffected()
 	return err
 }
 
-// createSuperUser 创建超级用户
-func createSuperUser(db *sql.DB) {
+// CreateSuperUser 创建超级用户
+func CreateSuperUser(db *gorm.DB, cf *config.MySQLConfig) {
+	superUser := &model.SysUser{}
+	err := db.Where("account = ?", cf.SuperUser).Find(superUser).Error
+	if err != nil {
+		log.Errorf("创建超级用户失败：%s", err)
+		os.Exit(1)
+	}
 
+	if superUser.ID == 0 {
+		superUser.Account = cf.SuperUser
+		superUser.Password = cf.SuperUserPwd
+		superUser.IsActive = true
+		superUser.Password, _ = superUser.Encrypt()
+		result := db.Create(&superUser)
+		if result.Error != nil {
+			log.Errorf("创建超级用户失败：%s", err)
+			os.Exit(1)
+		}
+	}
 }

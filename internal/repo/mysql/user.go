@@ -4,36 +4,36 @@ import (
 	"context"
 	"github.com/BooeZhang/gin-layout/internal/model"
 	"github.com/BooeZhang/gin-layout/internal/repo"
-	"gorm.io/gorm"
+	"github.com/BooeZhang/gin-layout/store"
 )
 
 var _ repo.UserRepo = (*userRepo)(nil)
 
 type userRepo struct {
-	ds *gorm.DB
+	storeIns store.Storage
 }
 
-func NewUserRepo(_ds *gorm.DB) *userRepo {
+func NewUserRepo(s store.Storage) *userRepo {
 	return &userRepo{
-		ds: _ds,
+		storeIns: s,
 	}
 }
 
-func (ur *userRepo) GetUserByName(ctx context.Context, name string) (*model.User, error) {
-	user := &model.User{}
-	err := ur.ds.Where("name = ?", name).Find(user).Error
+func (ur *userRepo) GetUserByName(ctx context.Context, name string) (*model.SysUser, error) {
+	user := &model.SysUser{}
+	err := ur.storeIns.GetMySQL().Where("name = ?", name).Find(user).Error
 	return user, err
 }
 
-func (ur *userRepo) GetUserById(ctx context.Context, uid int64) (*model.User, error) {
-	user := &model.User{}
-	err := ur.ds.Where("id = ?", uid).Find(user).Error
+func (ur *userRepo) GetUserById(ctx context.Context, uid int64) (*model.SysUser, error) {
+	user := &model.SysUser{}
+	err := ur.storeIns.GetMySQL().Where("id = ?", uid).Find(user).Error
 	return user, err
 }
 
-func (ur *userRepo) GetUserByMobile(ctx context.Context, mobile string) (*model.User, error) {
-	user := &model.User{}
-	err := ur.ds.
+func (ur *userRepo) GetUserByMobile(ctx context.Context, mobile string) (*model.SysUser, error) {
+	user := &model.SysUser{}
+	err := ur.storeIns.GetMySQL().
 		Where("mobile = ?", mobile).
 		Where("enabled_status = 1").
 		First(user).Error
