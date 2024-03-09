@@ -9,10 +9,8 @@ import (
 )
 
 type UserClaims struct {
-	UserId   uint32
+	UserId   uint
 	UserName string
-	Role     string
-	RoleId   uint32
 	Expire   time.Time
 }
 

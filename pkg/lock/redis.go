@@ -38,7 +38,7 @@ func (r *RedisLock) Lock(ctx context.Context, timeout time.Duration) (bool, erro
 
 // UnLock 释放锁
 func (r *RedisLock) UnLock(ctx context.Context) (bool, error) {
-	script := "if redis.call('GET',KEYS[1]) == ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end"
+	script := "if redisx.call('GET',KEYS[1]) == ARGV[1] then return redisx.call('DEL',KEYS[1]) else return 0 end"
 	ret, err := r.redisCli.Eval(ctx, script, []string{r.key}, r.token).Result()
 	if err != nil {
 		return false, err

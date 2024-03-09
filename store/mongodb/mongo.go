@@ -1,4 +1,4 @@
-package mongo
+package mongodb
 
 import (
 	"context"
@@ -9,13 +9,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 	"go.uber.org/zap"
 	"os"
 	"time"
 )
 
 var (
-	db *mongo.Client
+	dbClient *mongo.Client
+	db       *mongo.Database
 )
 
 func InitMongo(cf *config.MongoConf) {
@@ -28,21 +30,17 @@ func DialToMongo(op *config.MongoConf) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	clientOpt := options.Client()
-	if len(op.Username) != 0 && len(op.Password) != 0 {
-		clientOpt.SetAuth(options.Credential{
-			Username: op.Username,
-			Password: op.Password,
-		})
-	}
-	db, err = mongo.Connect(ctx, clientOpt.ApplyURI(fmt.Sprintf("mongodb://%s", op.Host)).SetMaxPoolSize(uint64(op.PoolLimit)))
+	dbClient, err = mongo.Connect(ctx, clientOpt.ApplyURI(op.Uri).SetMaxPoolSize(uint64(op.PoolLimit)))
 	if err != nil {
 		panic(err)
 	}
-	err = db.Ping(ctx, readpref.Primary())
+	err = dbClient.Ping(ctx, readpref.Primary())
 	if err != nil {
-		log.Error("mongo connect failed, err: ", zap.Error(err))
+		log.Error("mongodb connect failed, err: ", zap.Error(err))
 		os.Exit(1)
 	}
+	connStr, _ := connstring.Parse(op.Uri)
+	db = dbClient.Database(connStr.Database)
 }
 
 // EnsureIndex 添加索引
@@ -64,15 +62,12 @@ func EnsureIndex(ms *mongo.Client, collection string, ensureIndex []string, uniq
 	fmt.Println(names)
 }
 
-// GetSession 获取mongo连接会话
-func GetSession() *mongo.Client {
-	return db
+// GetClient 获取mongo连接会话
+func GetClient() *mongo.Client {
+	return dbClient
 }
 
 // GetDBSession 获取指定数据库
-func GetDBSession(dbName string) *mongo.Database {
-	if len(dbName) == 0 && dbName == "" {
-		return db.Database(config.GetConfig().MongoConfig.Database)
-	}
-	return db.Database(dbName)
+func GetDBSession() *mongo.Database {
+	return db
 }

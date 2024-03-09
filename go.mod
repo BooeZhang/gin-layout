@@ -124,6 +124,7 @@ require (
 	gorm.io/driver/postgres v1.5.4 // indirect
 	gorm.io/driver/sqlserver v1.5.2 // indirect
 	gorm.io/plugin/dbresolver v1.4.7 // indirect
+	gorm.io/plugin/soft_delete v1.2.1 // indirect
 	modernc.org/libc v1.30.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.7.2 // indirect

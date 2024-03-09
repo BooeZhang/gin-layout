@@ -2,8 +2,6 @@ package config
 
 // RedisConfig redis配置项
 type RedisConfig struct {
-	Host                  string   `json:"host"                     mapstructure:"host"`
-	Port                  int      `json:"port"						mapstructure:"port"`
 	Addrs                 []string `json:"addrs"                    mapstructure:"addrs"`
 	Username              string   `json:"username"                 mapstructure:"username"`
 	Password              string   `json:"password"                 mapstructure:"password"`

@@ -27,7 +27,7 @@ func (uh *Handler) Login(c *gin.Context) {
 		response.Error(c, err, nil)
 		return
 	}
-	data, err := uh.userSrv.Login(c, param.Username, param.Password)
+	data, err := uh.svc.Login(c, param.Username, param.Password)
 	if err != nil {
 		response.Error(c, err, nil)
 		return
