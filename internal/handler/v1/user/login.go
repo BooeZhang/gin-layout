@@ -15,7 +15,6 @@ import (
 // @Accept application/json
 // @Produce application/json
 // @Param   data body schema.LoginReq true "."
-// @Success 200 body schema.LoginRes()
 // @Success 200 {object} response.Response{data=schema.LoginRes} "ok"
 // @Router /user/login/ [post]
 func (uh *Handler) Login(c *gin.Context) {

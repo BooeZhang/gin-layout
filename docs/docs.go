@@ -64,9 +64,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "ok",
                         "schema": {
-                            "type": "body"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/schema.LoginRes"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -74,6 +86,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "response.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
         "schema.LoginReq": {
             "type": "object",
             "required": [
@@ -85,6 +109,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "schema.LoginRes": {
+            "type": "object",
+            "properties": {
+                "token": {
                     "type": "string"
                 }
             }

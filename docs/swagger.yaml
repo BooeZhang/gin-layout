@@ -1,4 +1,12 @@
 definitions:
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      msg:
+        type: string
+    type: object
   schema.LoginReq:
     properties:
       password:
@@ -8,6 +16,11 @@ definitions:
     required:
     - password
     - username
+    type: object
+  schema.LoginRes:
+    properties:
+      token:
+        type: string
     type: object
 info:
   contact: {}
@@ -43,9 +56,14 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ok
           schema:
-            type: body
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/schema.LoginRes'
+              type: object
       summary: 登录
       tags:
       - 用户
