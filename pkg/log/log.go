@@ -556,8 +556,8 @@ func (l *zapLogger) L(ctx context.Context) *zapLogger {
 	lg := l.clone()
 
 	requestID, _ := ctx.Value(KeyRequestID).(string)
-	username, _ := ctx.Value(KeyUsername).(string)
-	lg.zapLogger = lg.zapLogger.With(zap.String(KeyRequestID, requestID), zap.String(KeyUsername, username))
+	username, _ := ctx.Value(KeyUser).(string)
+	lg.zapLogger = lg.zapLogger.With(zap.String(KeyRequestID, requestID), zap.String(KeyUser, username))
 
 	return lg
 }

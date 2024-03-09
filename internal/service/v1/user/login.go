@@ -33,7 +33,7 @@ func (us *serviceImpl) Login(ctx context.Context, name, pwd string) (*schema.Log
 	}
 	res.Token, err = jwtx.GenToken(claims)
 	if err != nil {
-		log.L(ctx).Errorf("生成 token 失败", zap.Error(err))
+		log.L(ctx).Error("生成 token 失败", zap.Error(err))
 		return nil, err
 
 	}

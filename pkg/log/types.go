@@ -26,7 +26,7 @@ import (
 // Defines common log fields.
 const (
 	KeyRequestID string = "requestID"
-	KeyUsername  string = "user_name"
+	KeyUser      string = "user"
 )
 
 // Field is an alias for the field structure in the underlying log frame.
