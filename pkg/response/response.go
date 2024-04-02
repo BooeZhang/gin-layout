@@ -3,10 +3,13 @@ package response
 import (
 	"errors"
 	"fmt"
-	"github.com/BooeZhang/gin-layout/pkg/erroron"
-	"github.com/BooeZhang/gin-layout/pkg/log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+
+	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/pkg/erroron"
+	"github.com/BooeZhang/gin-layout/pkg/log"
 )
 
 type Response struct {
@@ -56,6 +59,9 @@ func Error(c *gin.Context, err error, data interface{}) {
 		return
 	}
 	code, httpCode, msg := erroron.DecodeErr(err)
+	if !config.GetConfig().HttpServerConfig.Debug && code == 500 {
+		msg = "服务器内部错误"
+	}
 	c.AbortWithStatusJSON(httpCode, gin.H{
 		"code": code,
 		"msg":  msg,

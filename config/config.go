@@ -3,10 +3,12 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/spf13/viper"
 	"os"
 	"strings"
+
+	"github.com/spf13/viper"
+
+	"github.com/BooeZhang/gin-layout/pkg/log"
 )
 
 var (
