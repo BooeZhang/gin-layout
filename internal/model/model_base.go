@@ -3,9 +3,10 @@ package model
 import (
 	"database/sql/driver"
 	"fmt"
-	"gorm.io/plugin/soft_delete"
 	"strconv"
 	"time"
+
+	"gorm.io/plugin/soft_delete"
 )
 
 // Model base model
@@ -21,7 +22,6 @@ func (m *Model) SetModifyTime(t time.Time) {
 }
 
 func (m *Model) GetModifyTime() time.Time {
-
 	length := len(fmt.Sprintf("%d", m.UpdatedAt))
 	if length > 10 {
 		return time.UnixMilli(int64(m.UpdatedAt))
@@ -45,12 +45,7 @@ func (t *MysqlTimestamp) UnmarshalJSON(data []byte) (err error) {
 
 // MarshalJSON implements json marshal interface.
 func (t MysqlTimestamp) MarshalJSON() ([]byte, error) {
-
-	return []byte(t.String()), nil
-}
-
-func (t MysqlTimestamp) String() string {
-	return fmt.Sprintf("%d", t)
+	return []byte(strconv.FormatInt(int64(t), 10)), nil
 }
 
 // Value ...

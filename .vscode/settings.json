@@ -1,0 +1,7 @@
+{
+    "commentTranslate.source": "Bing",
+    "go.toolsEnvVars": {
+        "GOPROXY": "https://goproxy.cn,direct",
+        "GO111MODULE": "on"
+    }
+}

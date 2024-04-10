@@ -2,10 +2,12 @@ package jwtx
 
 import (
 	"errors"
+	"time"
+
 	"github.com/BooeZhang/gin-layout/config"
 	"github.com/BooeZhang/gin-layout/pkg/erroron"
+	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/golang-jwt/jwt/v4"
-	"time"
 )
 
 type UserClaims struct {
@@ -65,16 +67,20 @@ func ParseToken(tokenString string) (*UserClaims, error) {
 
 	if err != nil {
 		var jwtErr *jwt.ValidationError
-		if errors.As(err, jwtErr) {
-			if jwtErr.Errors&jwt.ValidationErrorMalformed != 0 {
+		if errors.As(err, &jwtErr) {
+			switch {
+			case jwtErr.Errors&jwt.ValidationErrorMalformed != 0:
 				return nil, erroron.ErrTokenInvalid
-			} else if jwtErr.Errors&jwt.ValidationErrorExpired != 0 {
+			case jwtErr.Errors&jwt.ValidationErrorExpired != 0:
 				return nil, erroron.ErrTokenExpired
-			} else if jwtErr.Errors&jwt.ValidationErrorNotValidYet != 0 {
+			case jwtErr.Errors&jwt.ValidationErrorNotValidYet != 0:
 				return nil, erroron.ErrTokenNotActive
-			} else {
+			default:
 				return nil, erroron.ErrTokenInvalid
 			}
+		} else {
+			log.Errorf("token error: %s", err)
+			return nil, erroron.ErrTokenInvalid
 		}
 	}
 

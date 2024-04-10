@@ -9,8 +9,6 @@ func TestJWT(t *testing.T) {
 	claims := UserClaims{
 		UserId:   1,
 		UserName: "test",
-		Role:     "admin",
-		RoleId:   1,
 	}
 
 	token, err := GenToken(claims)

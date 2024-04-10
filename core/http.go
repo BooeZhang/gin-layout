@@ -4,15 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/BooeZhang/gin-layout/config"
-	"github.com/BooeZhang/gin-layout/docs"
-	middleware2 "github.com/BooeZhang/gin-layout/internal/middleware"
-	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"net"
 	"net/http"
 	"os"
@@ -22,6 +13,16 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/docs"
+	middleware2 "github.com/BooeZhang/gin-layout/internal/middleware"
+	"github.com/BooeZhang/gin-layout/pkg/log"
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 // Router 加载路由，使用侧提供接口，实现侧需要实现该接口
@@ -141,7 +142,7 @@ func (h *HttpServer) LoadRouter(rs ...Router) {
 }
 
 // Run 启动 http 服务器.
-func (h *HttpServer) Run() error {
+func (h *HttpServer) Run() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	h.HttpServer = &http.Server{
@@ -180,18 +181,16 @@ func (h *HttpServer) Run() error {
 	if cert == "" || key == "" {
 		log.Infof("Start to listening the incoming requests on http address: %s", h.address())
 		if err := h.HttpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return err
+			log.Fatal(err.Error())
 		}
 		log.Infof("Server on %s stopped", h.address())
 	} else {
 		log.Infof("Start to listening the incoming requests on https address: %s", h.address())
 		if err := h.HttpServer.ListenAndServeTLS(cert, key); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return err
+			log.Fatal(err.Error())
 		}
 		log.Infof("Server on %s stopped", h.address())
 	}
-
-	return errors.New("service shutdown")
 }
 
 // ping 服务器健康

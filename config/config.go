@@ -43,12 +43,12 @@ func InitConfig(fileName string) {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error: failed to read configuration file(%s): %v\n", fileName, err)
+		fmt.Fprintf(os.Stderr, "Error: failed to read configuration file(%s): %v\n", fileName, err)
 		os.Exit(1)
 	}
 
 	if err := viper.Unmarshal(&c); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error: Unable to decode into struct file(%s): %v\n", fileName, err)
+		fmt.Fprintf(os.Stderr, "Error: Unable to decode into struct file(%s): %v\n", fileName, err)
 		os.Exit(1)
 	}
 }
@@ -63,7 +63,7 @@ func (o *Config) String() string {
 // GetConfig 获取全局配置
 func GetConfig() *Config {
 	if c == nil {
-		return &Config{}
+		panic("Configuration has not been initialized. Please call InitConfig first.")
 	}
 	return c
 }

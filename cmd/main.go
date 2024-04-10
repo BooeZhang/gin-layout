@@ -3,15 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+
+	"github.com/fatih/color"
+	"github.com/spf13/viper"
+
 	"github.com/BooeZhang/gin-layout/config"
 	"github.com/BooeZhang/gin-layout/core"
 	"github.com/BooeZhang/gin-layout/internal/model"
 	"github.com/BooeZhang/gin-layout/pkg/auth"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/store/mysqlx"
-	"github.com/fatih/color"
-	"github.com/spf13/viper"
-	"os"
 )
 
 var (
@@ -45,7 +47,7 @@ func main() {
 
 	app := core.NewHttpServer(config.GetConfig())
 	app.LoadRouter(initRouter(st))
-	app.Run().Error()
+	app.Run()
 }
 
 func migrateDB(st *core.StoreImpl) {
