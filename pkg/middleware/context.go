@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/gin-gonic/gin"
+
+	"github.com/BooeZhang/gin-layout/pkg/log"
 )
 
 // UserKey defines the key in gin context which represents the owner of the secret.

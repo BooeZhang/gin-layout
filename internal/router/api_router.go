@@ -2,8 +2,9 @@ package router
 
 import (
 	"github.com/BooeZhang/gin-layout/internal/handler/v1/user"
-	"github.com/BooeZhang/gin-layout/internal/middleware"
 	"github.com/BooeZhang/gin-layout/pkg/auth"
+	middleware2 "github.com/BooeZhang/gin-layout/pkg/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,9 +22,9 @@ func (ar *ApiRouter) Load(g *gin.Engine) {
 	g.POST("/v1/user/login", ar.userHandler.Login)
 
 	// user group
-	ug := g.Group("/v1/user", middleware.JWTAuth(), middleware.NewAuthorizer(auth.GetEnforcer()))
+	ug := g.Group("/v1/user", middleware2.JWTAuth(), middleware2.NewAuthorizer(auth.GetEnforcer()))
 	{
 		ug.GET("", ar.userHandler.GetUserInfo)
-		//ug.POST('/add_auth', ar.userHandler.)
+		// ug.POST('/add_auth', ar.userHandler.)
 	}
 }

@@ -14,15 +14,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/BooeZhang/gin-layout/config"
-	"github.com/BooeZhang/gin-layout/docs"
-	middleware2 "github.com/BooeZhang/gin-layout/internal/middleware"
-	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
+
+	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/docs"
+	"github.com/BooeZhang/gin-layout/pkg/log"
+	"github.com/BooeZhang/gin-layout/pkg/middleware"
 )
 
 // Router 加载路由，使用侧提供接口，实现侧需要实现该接口
@@ -117,12 +118,12 @@ func (h *HttpServer) InstallAPIs() {
 func (h *HttpServer) InstallMiddlewares() {
 	// 必要中间件
 	h.Use(gin.Recovery())
-	h.Use(middleware2.RequestID())
-	h.Use(middleware2.Context())
+	h.Use(middleware.RequestID())
+	h.Use(middleware.Context())
 
 	// 自定义中间件
 	for _, m := range h.Middlewares {
-		mw, ok := middleware2.Middlewares[m]
+		mw, ok := middleware.Middlewares[m]
 		if !ok {
 			log.Warnf("can not find middleware: %s", m)
 
@@ -177,20 +178,25 @@ func (h *HttpServer) Run() {
 		}
 	}()
 
-	key, cert := h.CertKey.KeyFile, h.CertKey.CertFile
+	log.Infof("Start to listening the incoming requests on http address: %s", h.address())
+
+	var (
+		key, cert = h.CertKey.KeyFile, h.CertKey.CertFile
+		serverErr error
+	)
+
 	if cert == "" || key == "" {
-		log.Infof("Start to listening the incoming requests on http address: %s", h.address())
-		if err := h.HttpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal(err.Error())
-		}
-		log.Infof("Server on %s stopped", h.address())
+		serverErr = h.HttpServer.ListenAndServe()
 	} else {
-		log.Infof("Start to listening the incoming requests on https address: %s", h.address())
-		if err := h.HttpServer.ListenAndServeTLS(cert, key); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatal(err.Error())
-		}
-		log.Infof("Server on %s stopped", h.address())
+		serverErr = h.HttpServer.ListenAndServeTLS(cert, key)
 	}
+
+	if serverErr != nil && !errors.Is(serverErr, http.ErrServerClosed) {
+		log.Fatal(serverErr.Error())
+	}
+
+	log.Infof("Server on %s stopped", h.address())
+
 }
 
 // ping 服务器健康

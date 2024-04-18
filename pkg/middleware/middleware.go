@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
-	gindump "github.com/tpkeeper/gin-dump"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	gindump "github.com/tpkeeper/gin-dump"
 )
 
 // Middlewares 存储注册的中间件

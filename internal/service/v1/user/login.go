@@ -2,14 +2,16 @@ package user
 
 import (
 	"context"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/BooeZhang/gin-layout/pkg/constant"
+	"github.com/BooeZhang/gin-layout/pkg/crypto/hash"
 	"github.com/BooeZhang/gin-layout/pkg/erroron"
 	"github.com/BooeZhang/gin-layout/pkg/jwtx"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/schema"
-	"github.com/BooeZhang/gin-layout/pkg/sign"
-	"go.uber.org/zap"
-	"time"
 )
 
 // Login 登录
@@ -41,7 +43,7 @@ func (us *serviceImpl) Login(ctx context.Context, name, pwd string) (*schema.Log
 
 	}
 
-	res.Token = sign.MD5String(token)
+	res.Token = hash.MD5String(token)
 	key := constant.RedisKeyPrefixToken + res.Token
 	us.ctx.Rs.Set(ctx, key, token, time.Hour*us.ctx.Cfg.JwtConfig.Timeout)
 	return &res, nil

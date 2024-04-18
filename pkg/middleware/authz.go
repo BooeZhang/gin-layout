@@ -1,12 +1,14 @@
 package middleware
 
 import (
-	"github.com/BooeZhang/gin-layout/pkg/jwtx"
-	"github.com/BooeZhang/gin-layout/pkg/log"
-	"github.com/casbin/casbin/v2"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/casbin/casbin/v2"
+	"github.com/gin-gonic/gin"
+
+	"github.com/BooeZhang/gin-layout/pkg/jwtx"
+	"github.com/BooeZhang/gin-layout/pkg/log"
 )
 
 func NewAuthorizer(e *casbin.Enforcer) gin.HandlerFunc {
