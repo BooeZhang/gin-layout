@@ -3,12 +3,13 @@ package mysqlx
 import (
 	"database/sql"
 	"fmt"
+	"os"
+	"sync"
+
 	"github.com/BooeZhang/gin-layout/config"
 	"github.com/BooeZhang/gin-layout/internal/model"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/log/sqlhook"
-	"os"
-	"sync"
 
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
@@ -40,12 +41,12 @@ func InitMysql(cf *config.MySQLConfig) {
 
 // DialToMysql 连接 mysql
 func DialToMysql(op *config.MySQLConfig) {
-	var err error
 	var dbIns *gorm.DB
 	once.Do(func() {
 		err := createDB(op)
 		if err != nil {
-			log.Errorf("Database %s creation failure", op.Database)
+			log.Errorf("---> [MYSQL] Database %s creation failure", op.Database)
+			log.Errorf("---> [MYSQL] %s", err.Error())
 			os.Exit(1)
 		}
 		dsn := fmt.Sprintf(`%s:%s@tcp(%s)/%s?charset=utf8&parseTime=%t&loc=%s`,
@@ -73,15 +74,15 @@ func DialToMysql(op *config.MySQLConfig) {
 		sqlDB.SetMaxIdleConns(op.MaxIdleConnections)
 		err = sqlDB.Ping()
 		if err != nil {
-			log.Error("MySQL启动异常", zap.Error(err))
+			log.Error("---> [MYSQL] mysql connection failure", zap.Error(err))
 			os.Exit(0)
 		}
 
 		mysqlDB = dbIns
 	})
 
-	if mysqlDB == nil || err != nil {
-		log.Errorf("mysqlx connection failure, error: %s", err)
+	if mysqlDB == nil {
+		log.Errorf("---> [MYSQL] failed to get mysql store: %+v", mysqlDB)
 		os.Exit(1)
 	}
 }

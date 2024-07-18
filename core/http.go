@@ -53,6 +53,7 @@ func (h *HttpServer) address() string {
 // InitGenericAPIServer 初始化 API 服务
 func InitGenericAPIServer(s *HttpServer) {
 	if s.Debug {
+		// 启动 API 文档
 		s.SetupSwagger()
 	}
 	s.Setup()
@@ -164,7 +165,7 @@ func (h *HttpServer) Run() {
 		<-quit
 		log.Info("Shutting down server...")
 		if err := h.HttpServer.Shutdown(ctx); err != nil {
-			log.Errorf("Server forced to shutdown: ", err)
+			log.Errorf("Server forced to shutdown: %s", err.Error())
 		}
 		log.Info("Server exiting")
 	}()

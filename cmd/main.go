@@ -23,8 +23,8 @@ var (
 // printWorkingDir 打印工作目录
 func printWorkingDir() {
 	wd, _ := os.Getwd()
-	log.Infof("%v WorkingDir: %s", progressMessage, wd)
-	log.Infof("%v Config file used: `%s`", progressMessage, viper.ConfigFileUsed())
+	log.Infof("%v 工作目录: %s", progressMessage, wd)
+	log.Infof("%v 使用的配置文件为: `%s`", progressMessage, viper.ConfigFileUsed())
 }
 
 func main() {

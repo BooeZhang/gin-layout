@@ -3,14 +3,16 @@ package core
 import (
 	"context"
 	"database/sql"
-	"github.com/BooeZhang/gin-layout/config"
-	"github.com/BooeZhang/gin-layout/store/mongodb"
-	"github.com/BooeZhang/gin-layout/store/mysqlx"
-	"github.com/BooeZhang/gin-layout/store/redisx"
+
 	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/gorm"
+
+	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/store/mongodb"
+	"github.com/BooeZhang/gin-layout/store/mysqlx"
+	"github.com/BooeZhang/gin-layout/store/redisx"
 )
 
 type StoreImpl struct {
@@ -22,7 +24,7 @@ type StoreImpl struct {
 }
 
 func NewStorageWithConfig(c config.Config) *StoreImpl {
-	//mongodb.InitMongo(c.MongoConfig)
+	// mongodb.InitMongo(c.MongoConfig)
 	redisx.InitRedis(c.RedisConfig)
 	mysqlx.InitMysql(c.MySQLConfig)
 
@@ -82,10 +84,12 @@ func (s *StoreImpl) Close() bool {
 		return false
 	}
 
-	err = s.mgo.Client().Disconnect(context.Background())
-	if err != nil {
-		return false
+	if s.mgo != nil {
+		if err = s.mgo.Client().Disconnect(context.Background()); err != nil {
+			return false
+		}
 	}
+
 	s.closed = true
 
 	return true

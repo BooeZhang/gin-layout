@@ -3,10 +3,11 @@ package redisx
 import (
 	"context"
 	"crypto/tls"
-	"github.com/BooeZhang/gin-layout/config"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/BooeZhang/gin-layout/config"
 
 	"github.com/BooeZhang/gin-layout/pkg/log"
 
@@ -27,7 +28,7 @@ func InitRedis(cf *config.RedisConfig) {
 // ConnectToRedis 连接redis
 func ConnectToRedis(cnf *config.RedisConfig) {
 	if cnf == nil {
-		log.Error("failed to get redisx store fatory")
+		log.Error("---> [REDIS] configuration files are empty")
 		os.Exit(1)
 	}
 	log.Debug("Creating new Redis connection pool")
@@ -65,33 +66,33 @@ func ConnectToRedis(cnf *config.RedisConfig) {
 		}
 
 		if cnf.MasterName != "" {
-			log.Info("--> [REDIS] Creating sentinel-backed failover client")
+			log.Info("---> [REDIS] Creating sentinel-backed failover client")
 			client = redis.NewFailoverClient(redisOption.Failover())
 		} else if cnf.EnableCluster {
-			log.Info("--> [REDIS] Creating cluster client")
+			log.Info("---> [REDIS] Creating cluster client")
 			client = redis.NewClusterClient(redisOption.Cluster())
 		} else {
-			log.Info("--> [REDIS] Creating single-node client")
+			log.Info("---> [REDIS] Creating single-node client")
 			client = redis.NewClient(redisOption.Simple())
 		}
 
 		pong, err := client.Ping(context.Background()).Result()
 		if err != nil {
-			log.Error("redisx connect ping failed, err:", zap.Any("err", err))
+			log.Error("---> [REDIS] redis connect ping failed, err:", zap.Any("err", err))
 			os.Exit(1)
 		} else {
-			log.Info("redisx connect ping response:", zap.String("pong", pong))
+			log.Info("---> [REDIS] redis connect ping response:", zap.String("pong", pong))
 		}
 		r = client
 	})
 
 	if r == nil {
-		log.Errorf("failed to get redisx store fatory, redisFactory: %+v", r)
+		log.Errorf("---> [REDIS] failed to get redis store: %+v", r)
 		os.Exit(1)
 	}
 }
 
-// GetRedis 获取 redisx session
+// GetRedis 获取 redis session
 func GetRedis() redis.UniversalClient {
 	return r
 }
