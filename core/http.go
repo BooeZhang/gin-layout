@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
-	"os/signal"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/gin-contrib/pprof"
@@ -157,18 +154,6 @@ func (h *HttpServer) Run() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	// 优雅关闭
-	go func() {
-		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		<-quit
-		log.Info("Shutting down server...")
-		if err := h.HttpServer.Shutdown(ctx); err != nil {
-			log.Errorf("Server forced to shutdown: %s", err.Error())
-		}
-		log.Info("Server exiting")
-	}()
 
 	// 健康检查
 	go func() {

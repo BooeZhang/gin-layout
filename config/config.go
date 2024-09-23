@@ -17,14 +17,14 @@ var (
 
 // Config 配置选项
 type Config struct {
-	GRPCConfig       *GRPCConfig       `json:"grpc"     mapstructure:"grpc"`
-	HttpServerConfig *HttpServerConfig `json:"http"     mapstructure:"http"`
-	MySQLConfig      *MySQLConfig      `json:"mysql"    mapstructure:"mysql"`
-	RedisConfig      *RedisConfig      `json:"redis"    mapstructure:"redis"`
-	MongoConfig      *MongoConf        `json:"mongodb"  mapstructure:"mongodb"`
-	JwtConfig        *JwtConfig        `json:"jwt"      mapstructure:"jwt"`
-	LogConfig        *log.Options      `json:"log"      mapstructure:"log"`
-	CasbinConf       *CasbinConf       `json:"casbin"   mapstructure:"casbin"`
+	GRPCConfig       *GRPC        `json:"grpc"     mapstructure:"grpc"`
+	HttpServerConfig *HttpServer  `json:"http"     mapstructure:"http"`
+	MySQLConfig      *MySQL       `json:"mysql"    mapstructure:"mysql"`
+	RedisConfig      *Redis       `json:"redis"    mapstructure:"redis"`
+	MongoConfig      *Mongo       `json:"mongodb"  mapstructure:"mongodb"`
+	JwtConfig        *Jwt         `json:"jwt"      mapstructure:"jwt"`
+	LogConfig        *log.Options `json:"log"      mapstructure:"log"`
+	CasbinConf       *Casbin      `json:"casbin"   mapstructure:"casbin"`
 }
 
 // InitConfig 初始化配置

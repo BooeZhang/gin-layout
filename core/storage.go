@@ -10,9 +10,14 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/store"
 	"github.com/BooeZhang/gin-layout/store/mongodb"
 	"github.com/BooeZhang/gin-layout/store/mysqlx"
 	"github.com/BooeZhang/gin-layout/store/redisx"
+)
+
+var (
+	st *StoreImpl
 )
 
 type StoreImpl struct {
@@ -28,11 +33,13 @@ func NewStorageWithConfig(c config.Config) *StoreImpl {
 	redisx.InitRedis(c.RedisConfig)
 	mysqlx.InitMysql(c.MySQLConfig)
 
-	return &StoreImpl{
+	st = &StoreImpl{
 		mysql: mysqlx.GetDB(),
 		mgo:   mongodb.GetDBSession(),
 		rds:   redisx.GetRedis(),
 	}
+
+	return st
 }
 
 func (s *StoreImpl) GetMySQL() *gorm.DB {
@@ -93,4 +100,8 @@ func (s *StoreImpl) Close() bool {
 	s.closed = true
 
 	return true
+}
+
+func GetStore() store.Storage {
+	return st
 }

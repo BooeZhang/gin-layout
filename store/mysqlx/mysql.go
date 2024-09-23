@@ -25,22 +25,13 @@ func GetDB() *gorm.DB {
 	return mysqlDB
 }
 
-// Close 关闭数据库
-func Close() error {
-	db, err := mysqlDB.DB()
-	if err != nil {
-		return err
-	}
-	return db.Close()
-}
-
 // InitMysql 初始化 mysql
-func InitMysql(cf *config.MySQLConfig) {
+func InitMysql(cf *config.MySQL) {
 	DialToMysql(cf)
 }
 
 // DialToMysql 连接 mysql
-func DialToMysql(op *config.MySQLConfig) {
+func DialToMysql(op *config.MySQL) {
 	var dbIns *gorm.DB
 	once.Do(func() {
 		err := createDB(op)
@@ -88,7 +79,7 @@ func DialToMysql(op *config.MySQLConfig) {
 }
 
 // createDB 创建数据库
-func createDB(opts *config.MySQLConfig) error {
+func createDB(opts *config.MySQL) error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/", opts.Username, opts.Password, opts.Host)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -112,7 +103,7 @@ func createDB(opts *config.MySQLConfig) error {
 }
 
 // CreateSuperUser 创建超级用户
-func CreateSuperUser(db *gorm.DB, cf *config.MySQLConfig) {
+func CreateSuperUser(db *gorm.DB, cf *config.MySQL) {
 	superUser := &model.SysUser{}
 	err := db.Where("account = ?", cf.SuperUser).Find(superUser).Error
 	if err != nil {

@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// JwtConfig JWT配置项.
-type JwtConfig struct {
+// Jwt JWT配置项.
+type Jwt struct {
 	Realm      string        `json:"realm"       mapstructure:"realm"`
 	Key        string        `json:"key"         mapstructure:"key"`
 	Timeout    time.Duration `json:"timeout"     mapstructure:"timeout"`

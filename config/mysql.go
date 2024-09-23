@@ -2,8 +2,8 @@ package config
 
 import "time"
 
-// MySQLConfig mysql配置项
-type MySQLConfig struct {
+// MySQL mysql配置项
+type MySQL struct {
 	Host                  string        `json:"host,omitempty"                     mapstructure:"host"`
 	Username              string        `json:"username,omitempty"                 mapstructure:"username"`
 	Password              string        `json:"-"                                  mapstructure:"password"`

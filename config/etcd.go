@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 )
 
-// EtcdConfig etcd配置项
-type EtcdConfig struct {
+// Etcd etcd配置项
+type Etcd struct {
 	Endpoints            []string `json:"endpoints"               mapstructure:"endpoints"`
 	Timeout              int      `json:"timeout"                 mapstructure:"timeout"`
 	RequestTimeout       int      `json:"request-timeout"         mapstructure:"request-timeout"`
@@ -25,8 +25,8 @@ type EtcdConfig struct {
 	Namespace            string   `json:"namespace"               mapstructure:"namespace"`
 }
 
-// Validate verifies flags passed to RedisConfig.
-func (o *EtcdConfig) Validate() []error {
+// Validate verifies flags passed to Redis.
+func (o *Etcd) Validate() []error {
 	errs := []error{}
 
 	if len(o.Endpoints) == 0 {
@@ -41,7 +41,7 @@ func (o *EtcdConfig) Validate() []error {
 }
 
 // GetEtcdTLSConfig returns etcd tls config.
-func (o *EtcdConfig) GetEtcdTLSConfig() (*tls.Config, error) {
+func (o *Etcd) GetEtcdTLSConfig() (*tls.Config, error) {
 	var (
 		cert       tls.Certificate
 		certLoaded bool
@@ -78,7 +78,7 @@ func (o *EtcdConfig) GetEtcdTLSConfig() (*tls.Config, error) {
 	}
 
 	if o.UseTLS {
-		//nolint: gosec
+		// nolint: gosec
 		cfg := &tls.Config{
 			RootCAs:            capool,
 			InsecureSkipVerify: false,

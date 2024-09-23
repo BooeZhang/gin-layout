@@ -21,12 +21,12 @@ var (
 )
 
 // InitRedis 初始化 redisx
-func InitRedis(cf *config.RedisConfig) {
+func InitRedis(cf *config.Redis) {
 	ConnectToRedis(cf)
 }
 
 // ConnectToRedis 连接redis
-func ConnectToRedis(cnf *config.RedisConfig) {
+func ConnectToRedis(cnf *config.Redis) {
 	if cnf == nil {
 		log.Error("---> [REDIS] configuration files are empty")
 		os.Exit(1)

@@ -1,7 +1,7 @@
 package config
 
-// HttpServerConfig http服务配置项.
-type HttpServerConfig struct {
+// HttpServer http服务配置项.
+type HttpServer struct {
 	BindAddress     string   `json:"bind-address" mapstructure:"bind-address"`
 	BindPort        int      `json:"bind-port" mapstructure:"bind-port"`
 	Debug           bool     `json:"debug"       mapstructure:"debug"`

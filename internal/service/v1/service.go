@@ -2,7 +2,8 @@ package v1
 
 import (
 	"github.com/BooeZhang/gin-layout/config"
-	"github.com/BooeZhang/gin-layout/store"
+	"github.com/BooeZhang/gin-layout/store/redisx"
+
 	"github.com/go-redis/redis/v8"
 )
 
@@ -12,7 +13,7 @@ type ServiceContext struct {
 }
 
 // NewServiceContext .
-func NewServiceContext(s store.Storage) *ServiceContext {
+func NewServiceContext() *ServiceContext {
 	c := config.GetConfig()
-	return &ServiceContext{Rs: s.GetRedis(), Cfg: c}
+	return &ServiceContext{Rs: redisx.GetRedis(), Cfg: c}
 }

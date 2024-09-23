@@ -3,16 +3,18 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"github.com/BooeZhang/gin-layout/config"
-	"github.com/BooeZhang/gin-layout/pkg/log"
+	"os"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 	"go.uber.org/zap"
-	"os"
-	"time"
+
+	"github.com/BooeZhang/gin-layout/config"
+	"github.com/BooeZhang/gin-layout/pkg/log"
 )
 
 var (
@@ -20,12 +22,12 @@ var (
 	db       *mongo.Database
 )
 
-func InitMongo(cf *config.MongoConf) {
+func InitMongo(cf *config.Mongo) {
 	DialToMongo(cf)
 }
 
 // DialToMongo 根据配置连接到mongo
-func DialToMongo(op *config.MongoConf) {
+func DialToMongo(op *config.Mongo) {
 	var err error
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

@@ -1,11 +1,23 @@
-package user
+package admin
 
 import (
+	"github.com/gin-gonic/gin"
+
+	srvv1 "github.com/BooeZhang/gin-layout/internal/service/v1/admin"
 	"github.com/BooeZhang/gin-layout/pkg/log"
 	"github.com/BooeZhang/gin-layout/pkg/response"
 	"github.com/BooeZhang/gin-layout/pkg/schema"
-	"github.com/gin-gonic/gin"
+	"github.com/BooeZhang/gin-layout/store"
 )
+
+// CommHandler 公共业务 handler
+type CommHandler struct {
+	srv *srvv1.CommService
+}
+
+func NewCommHandler(s store.Storage) *CommHandler {
+	return &CommHandler{srv: srvv1.NewCommService(s)}
+}
 
 // Login
 // @Summary 登录
@@ -17,7 +29,7 @@ import (
 // @Param   data body schema.LoginReq true "."
 // @Success 200 {object} response.Response{data=schema.LoginRes} "ok"
 // @Router /user/login/ [post]
-func (uh *Handler) Login(c *gin.Context) {
+func (ch CommHandler) Login(c *gin.Context) {
 	var param schema.LoginReq
 
 	err := c.ShouldBindJSON(&param)
@@ -26,7 +38,7 @@ func (uh *Handler) Login(c *gin.Context) {
 		response.Error(c, err, nil)
 		return
 	}
-	data, err := uh.svc.Login(c, param.Username, param.Password)
+	data, err := ch.srv.Login(c, param.Username, param.Password)
 	if err != nil {
 		response.Error(c, err, nil)
 		return
