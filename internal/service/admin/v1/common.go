@@ -3,12 +3,12 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
-	"layout/internal/model"
-	"layout/internal/repo"
-	rp "layout/internal/repo/mysql"
-	"layout/pkg/erroron"
-	"layout/pkg/jwtx"
-	"layout/store/mysqlx"
+	"gin-layout/internal/model"
+	"gin-layout/internal/repo"
+	rp "gin-layout/internal/repo/mysql"
+	"gin-layout/pkg/erroron"
+	"gin-layout/pkg/jwtx"
+	"gin-layout/store/mysqlx"
 )
 
 type CommService struct {
