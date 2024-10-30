@@ -1,0 +1,61 @@
+[http]
+# 运行模式
+debug = true
+# 是否开启健康检查
+health = true
+# http 绑定地址
+bind-address = "0.0.0.0"
+#  http 绑定端口
+bind-port = 8091
+# 启用的中间件
+middlewares = []
+# https 配置
+cert-file = ""
+# 是否启用性能分析
+enable-profiling = true
+# 是否启用监控
+enable-metrics = false
+# casbin 文件
+casbin-model-path = "etc/rbac_model.conf"
+
+[log]
+# 日志级别
+level = "INFO"
+# 输出格式(json、console) 默认console
+format = "console"
+
+
+[jwt]
+# 密钥
+key = "secret key"
+# 访问令牌过期时间(分)
+access-expired = 15
+# 刷新令牌过期时间(小时)
+refresh-expired = 24
+
+[mysql]
+# 连接地址
+host = "127.0.0.1:3306"
+# 用户名
+username = "root"
+# 密码
+password = "root"
+# 数据库名
+database = "candle_light"
+# 最大空闲连接数
+max-idle-connections = 30
+# 最大打开连接数
+max-open-connections = 30
+# 最大连接重用时长
+max-connection-life-time = 30
+# 是否开启sql日志打印
+log-level = "info"
+# 管理员账号
+super-user = "admin"
+# 管理员密码
+super-user-pwd = "admin12345"
+[redis]
+# 连接地址
+addr = ["127.0.0.1:6579"]
+# 数据库编号
+database = 15
