@@ -44,6 +44,9 @@ func (us UserService) Login(ctx *gin.Context, name, pwd string) (model.LoginRes,
 		UserName: user.Account,
 	}
 	res.AccessToken, err = jwtx.GenAccessToken(claims)
+	if err != nil {
+		return res, err
+	}
 	res.RefreshToken, err = jwtx.GenRefreshToken(claims)
 	if err != nil {
 		return res, err

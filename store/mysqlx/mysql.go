@@ -3,10 +3,8 @@ package mysqlx
 import (
 	"database/sql"
 	"fmt"
-	sysLog "log"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/mysql"
@@ -29,18 +27,6 @@ func DialToMysql(op *config.MySQL) {
 		if err != nil {
 			log.Fatal().Err(err).Msgf("---> [MYSQL] Database %s creation failure", op.Database)
 		}
-
-		newLogger := logger.New(
-			sysLog.New(os.Stdout, "\r\n", sysLog.LstdFlags),
-			logger.Config{
-				SlowThreshold:             time.Second, // Slow SQL threshold
-				LogLevel:                  logger.Info, // Log level
-				IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-				ParameterizedQueries:      true,        // Don't include params in the SQL log
-				Colorful:                  false,       // Disable color
-			},
-		)
-
 		dsn := fmt.Sprintf(`%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=%t&loc=%s`,
 			op.Username,
 			op.Password,
@@ -48,17 +34,31 @@ func DialToMysql(op *config.MySQL) {
 			op.Database,
 			true,
 			"Local")
-		dbIns, err = gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: newLogger})
+
+		lv := logger.Info
+		if !op.EchoSql {
+			lv = logger.Silent
+		}
+
+		dbIns, err = gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(lv)})
+		if err != nil {
+			log.Error().Err(err).Msg("--->[MYSQL] mysql connection open failure")
+			os.Exit(1)
+		}
 
 		var sqlDB *sql.DB
-
 		sqlDB, err = dbIns.DB()
+		if err != nil {
+			log.Error().Err(err).Msg("--->[MYSQL] mysql get sql db failure")
+			os.Exit(1)
+
+		}
 		sqlDB.SetMaxOpenConns(op.MaxOpenConnections)
 		sqlDB.SetConnMaxLifetime(op.MaxConnectionLifeTime)
 		sqlDB.SetMaxIdleConns(op.MaxIdleConnections)
 		err = sqlDB.Ping()
 		if err != nil {
-			log.Error().Err(err).Msgf("---> [MYSQL] mysql connection failure: %s", err)
+			log.Error().Err(err).Msg("---> [MYSQL] mysql connection failure")
 			os.Exit(0)
 		}
 

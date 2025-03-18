@@ -13,7 +13,7 @@ type MySQL struct {
 	MaxIdleConnections    int           `json:"max-idle-connections"     mapstructure:"max-idle-connections"`
 	MaxOpenConnections    int           `json:"max-open-connections"     mapstructure:"max-open-connections"`
 	MaxConnectionLifeTime time.Duration `json:"max-connection-life-time" mapstructure:"max-connection-life-time"`
-	LogLevel              string        `json:"log-level"                mapstructure:"log-level"`
+	EchoSql               bool          `json:"echo-sql"                mapstructure:"echo-sql"`
 
 	SuperUser    string `json:"super-user" mapstructure:"super-user"`
 	SuperUserPwd string `json:"super-user-pwd" mapstructure:"super-user-pwd"`

@@ -4,16 +4,16 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"gin-layout/internal/model"
-	srvv1 "gin-layout/internal/service/admin/v1"
+	srv1 "gin-layout/internal/service/admin/v1"
 	"gin-layout/pkg/response"
 )
 
 type CommonController struct {
-	srv *srvv1.CommService
+	srv *srv1.CommService
 }
 
 func NewCommonController() *CommonController {
-	return &CommonController{srv: srvv1.NewCommService()}
+	return &CommonController{srv: srv1.NewCommService()}
 }
 
 // Login

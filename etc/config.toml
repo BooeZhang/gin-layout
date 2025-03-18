@@ -6,7 +6,7 @@ health = true
 # http 绑定地址
 bind-address = "0.0.0.0"
 #  http 绑定端口
-bind-port = 8091
+bind-port = 8093
 # 启用的中间件
 middlewares = []
 # https 配置
@@ -49,7 +49,7 @@ max-open-connections = 30
 # 最大连接重用时长
 max-connection-life-time = 30
 # 是否开启sql日志打印
-log-level = "info"
+echo-sql = true
 # 管理员账号
 super-user = "admin"
 # 管理员密码

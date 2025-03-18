@@ -163,6 +163,9 @@ func GetToken(ctx *gin.Context) (string, error) {
 // GetClaims 获取 token Claims
 func GetClaims(ctx *gin.Context) *UserClaims {
 	token, err := GetToken(ctx)
+	if err != nil {
+		return &UserClaims{}
+	}
 	claims, err := ParseToken(token)
 	if err != nil {
 		return &UserClaims{}
