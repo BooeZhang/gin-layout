@@ -1,0 +1,6 @@
+*.local
+.codex
+.superpowers
+node_modules
+dist
+stats.html

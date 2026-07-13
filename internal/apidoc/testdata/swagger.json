@@ -1,0 +1,668 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Gin Layout API",
+    "description": "Gin Layout Swagger API 文档",
+    "version": "1.0.0"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "tags": [
+    {
+      "name": "用户"
+    },
+    {
+      "name": "系统"
+    },
+    {
+      "name": "角色"
+    },
+    {
+      "name": "认证"
+    }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "登录",
+        "tags": [
+          "认证"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/internal.apidoc.goldenLoginReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response[internal.apidoc.goldenLoginRes]"
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/auth/refresh-token": {
+      "post": {
+        "summary": "刷新令牌",
+        "tags": [
+          "认证"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/internal.apidoc.goldenRefreshReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response[internal.apidoc.goldenTokenRes]"
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/v1/roles": {
+      "get": {
+        "summary": "角色列表",
+        "tags": [
+          "角色"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "description": "页码",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "description": "每页数量",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response[internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]]"
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "summary": "用户列表",
+        "tags": [
+          "用户"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "description": "页码",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "size",
+            "description": "每页数量",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response[internal.apidoc.goldenUserListRes]"
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "post": {
+        "summary": "创建用户",
+        "tags": [
+          "用户"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/internal.apidoc.goldenCreateUserReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response[internal.apidoc.goldenUserRes]"
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/api/v1/users/{id}": {
+      "delete": {
+        "summary": "删除用户",
+        "tags": [
+          "用户"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response"
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ]
+      },
+      "put": {
+        "summary": "更新用户",
+        "tags": [
+          "用户"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/internal.apidoc.goldenUpdateUserReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response[internal.apidoc.goldenUserRes]"
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": "用户不存在"
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "健康检查",
+        "tags": [
+          "系统"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "schema": {
+              "$ref": "#/definitions/common.Response[internal.apidoc.goldenHealthRes]"
+            }
+          },
+          "400": {
+            "description": "请求参数错误"
+          },
+          "500": {
+            "description": "服务器内部错误"
+          }
+        },
+        "produces": [
+          "application/json"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "common.Response": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "type": "object",
+          "description": "响应数据"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "common.Response[internal.apidoc.goldenHealthRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenHealthRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "common.Response[internal.apidoc.goldenLoginRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenLoginRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "common.Response[internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "common.Response[internal.apidoc.goldenTokenRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenTokenRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "common.Response[internal.apidoc.goldenUserListRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenUserListRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "common.Response[internal.apidoc.goldenUserRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenUserRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "internal.apidoc.goldenCreateUserReq": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string",
+          "description": "账号"
+        },
+        "name": {
+          "type": "string",
+          "description": "姓名"
+        },
+        "password": {
+          "type": "string",
+          "description": "密码"
+        }
+      },
+      "required": [
+        "account",
+        "password"
+      ]
+    },
+    "internal.apidoc.goldenHealthRes": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "internal.apidoc.goldenLoginReq": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string",
+          "description": "账号"
+        },
+        "password": {
+          "type": "string",
+          "description": "密码"
+        }
+      },
+      "required": [
+        "account",
+        "password"
+      ]
+    },
+    "internal.apidoc.goldenLoginRes": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    },
+    "internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/internal.apidoc.goldenRoleItem"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "internal.apidoc.goldenRefreshReq": {
+      "type": "object",
+      "properties": {
+        "refreshToken": {
+          "type": "string",
+          "description": "刷新令牌"
+        }
+      },
+      "required": [
+        "refreshToken"
+      ]
+    },
+    "internal.apidoc.goldenRoleItem": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "internal.apidoc.goldenTokenRes": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    },
+    "internal.apidoc.goldenUpdateUserReq": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "姓名"
+        }
+      }
+    },
+    "internal.apidoc.goldenUserListRes": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/internal.apidoc.goldenUserRes"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "internal.apidoc.goldenUserRes": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}

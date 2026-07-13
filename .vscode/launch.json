@@ -1,0 +1,118 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // ==================== 服务调试 ====================
+
+    {
+      "name": "Debug Server (etc/config.toml)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/server",
+      "env": {},
+      "args": ["-c", "etc/config.toml"],
+      "cwd": "${workspaceFolder}",
+      "buildFlags": "-buildvcs=false"
+    },
+    {
+      "name": "Debug Server (etc/config.docker.toml)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/server",
+      "env": {},
+      "args": ["-c", "etc/config.docker.toml"],
+      "cwd": "${workspaceFolder}",
+      "buildFlags": "-buildvcs=false"
+    },
+    {
+      "name": "Debug Server (Custom Config)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/server",
+      "env": {},
+      "args": ["-c", "${input:configFile}"],
+      "cwd": "${workspaceFolder}",
+      "buildFlags": "-buildvcs=false",
+      "presentation": {
+        "hidden": true
+      }
+    },
+
+    // ==================== 附加调试 ====================
+
+    {
+      "name": "Attach to Process",
+      "type": "go",
+      "request": "attach",
+      "mode": "local",
+      "processId": "${command:pickProcess}",
+      "presentation": {
+        "group": "attach",
+        "order": 1
+      }
+    },
+    {
+      "name": "Attach to Remote (headless delve)",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "remotePath": "${workspaceFolder}",
+      "port": 2345,
+      "host": "127.0.0.1",
+      "presentation": {
+        "group": "attach",
+        "order": 2
+      }
+    },
+
+    // ==================== 构建/运行 ====================
+
+    {
+      "name": "Build Binary",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/bin/gin-layout",
+      "buildFlags": "-ldflags=\\\"-w -s\\\" -buildvcs=false",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "go-build",
+      "presentation": {
+        "group": "build",
+        "order": 1
+      }
+    },
+    {
+      "name": "Run Server (no debug)",
+      "type": "go",
+      "request": "launch",
+      "mode": "exec",
+      "program": "${workspaceFolder}/bin/gin-layout",
+      "args": ["-c", "etc/config.toml"],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "go-build",
+      "presentation": {
+        "group": "build",
+        "order": 2
+      }
+    }
+  ],
+
+  // ==================== 输入变量 ====================
+
+  "inputs": [
+    {
+      "id": "configFile",
+      "type": "promptString",
+      "description": "配置文件路径",
+      "default": "etc/config.toml"
+    },
+    {
+      "id": "testPattern",
+      "type": "promptString",
+      "description": "测试函数名正则（留空运行全部）",
+      "default": ""
+    }
+  ]
+}

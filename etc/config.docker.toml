@@ -1,0 +1,43 @@
+[app]
+name = "gin-layout"
+env = "docker"
+version = "1.0.0"
+
+[server]
+host = "0.0.0.0"
+port = 8080
+mode = "release"
+
+[database]
+driver = "mysql"
+host = "mysql"
+port = 3306
+user = "root"
+password = "root123"
+database = "gin_layout"
+maxOpenConns = 100
+maxIdleConns = 10
+connMaxLifetime = 3600
+
+[redis]
+host = "redis"
+port = 6379
+password = ""
+db = 0
+poolSize = 100
+
+[jwt]
+secret = "your-secret-key-change-in-production"
+accessExpired = 720
+refreshExpired = 43200
+
+[casbin]
+modelPath = "etc/casbin_model.conf"
+autoLoad = true
+autoSave = true
+autoBuild = true
+
+[log]
+level = "info"
+format = "json"
+outputPath = ""

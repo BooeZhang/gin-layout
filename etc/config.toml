@@ -1,0 +1,49 @@
+[server]
+host = "0.0.0.0"
+port = 8085
+mode = "debug"
+
+[database]
+driver = "mysql"
+host = "127.0.0.1"
+port = 3306
+user = "root"
+password = "root"
+database = "gin_layout"
+maxOpenConns = 100
+maxIdleConns = 10
+connMaxLifetime = 3600
+
+[redis]
+mode = "single"
+addrs = ["127.0.0.1:6379"]
+password = ""
+db = 0
+poolSize = 100
+
+[jwt]
+secret = "your-secret-key-change-in-production"
+accessExpired = 300
+refreshExpired = 43200
+
+[casbin]
+modelPath = "etc/casbin_model.conf"
+
+[log]
+level = "debug"
+format = "console"
+outputPath = "logs"
+
+
+[apidoc]
+enabled = true
+title = "Gin Layout API"
+version = "1.0.0"
+description = "Gin Layout Swagger API 文档"
+
+[initializer]
+adminAccount = "admin"
+adminPassword = "admin123"
+adminRoleName = "超级管理员"
+adminRoleCode = "ADMIN"
+menuJSON = "internal/bootstrap/initializer/menu.json"
