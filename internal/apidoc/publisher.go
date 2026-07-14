@@ -2,19 +2,21 @@ package apidoc
 
 import (
 	"cmp"
+	_ "embed"
 	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"gin-layout/config"
 )
 
-// Publisher 在运行时提供 Swagger JSON 和 Swagger UI。
+//go:embed static/redoc.standalone.js
+var redocJS []byte
+
+// Publisher 在运行时提供 API 文档 JSON 和 Redoc UI。
 // Spec 惰性构建（首次请求 /doc.json 时），也可通过 Build() 在启动时主动构建以快速失败。
 type Publisher struct {
 	cfg      config.APIDocConfig
@@ -54,21 +56,18 @@ func (p *Publisher) Build() error {
 	return err
 }
 
-// UIPath 返回去掉通配符后的 Swagger UI 路径，用于日志打印。例如 "/swagger-ui/"。
+// UIPath 返回去掉通配符后的文档 UI 路径，用于日志打印。例如 "/docs/"。
 func (p *Publisher) UIPath() string {
 	return strings.TrimSuffix(p.uiPath, "/*any")
 }
 
-// Register 实现 server.Router，注册文档与 UI 端点。
+// Register 实现 server.Router，注册文档 JSON 与 Redoc UI 端点。
 func (p *Publisher) Register(engine *gin.Engine) {
 	if !p.enabled {
 		return
 	}
 	engine.GET(p.jsonPath, p.handleJSON)
-	engine.GET(p.uiPath, ginSwagger.WrapHandler(
-		swaggerFiles.Handler,
-		ginSwagger.URL(p.jsonPath),
-	))
+	engine.GET(p.uiPath, p.handleUI)
 }
 
 func (p *Publisher) handleJSON(c *gin.Context) {
@@ -79,6 +78,43 @@ func (p *Publisher) handleJSON(c *gin.Context) {
 	}
 	c.Data(http.StatusOK, "application/json; charset=utf-8", data)
 }
+
+func (p *Publisher) handleUI(c *gin.Context) {
+	// 对 /docs/redoc.standalone.js 这类资源请求返回嵌入的 JS 文件。
+	if strings.HasSuffix(c.Param("any"), ".js") {
+		c.Data(http.StatusOK, "application/javascript; charset=utf-8", redocJS)
+		return
+	}
+
+	html := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>%s</title>
+<style>
+body { margin: 0; padding: 0; }
+redoc { display: block; }
+</style>
+</head>
+<body>
+<redoc spec-url="%s"></redoc>
+<script src="redoc.standalone.js"></script>
+</body>
+</html>
+`, htmlEscaper.Replace(p.cfg.Title), htmlEscaper.Replace(p.jsonPath))
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
+}
+
+// htmlEscaper 防止 HTML 模板中的标题或 URL 被意外转义。
+var htmlEscaper = strings.NewReplacer(
+	"&", "&amp;",
+	"<", "&lt;",
+	">", "&gt;",
+	"\"", "&#34;",
+	"'", "&#39;",
+)
 
 func (p *Publisher) buildSpec() ([]byte, error) {
 	p.mu.RLock()

@@ -38,7 +38,7 @@
 
 ### 文档与接口
 
-- **Swagger API 文档** — 使用 swaggo 自动生成交互式 API 文档
+- **API 文档 (Redoc)** — 使用 Redoc 提供交互式 API 文档
 - **自动化文档生成** — 支持自定义 Schema 和接口分组
 
 ## 🛠 技术栈

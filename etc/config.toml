@@ -39,7 +39,7 @@ outputPath = "logs"
 enabled = true
 title = "Gin Layout API"
 version = "1.0.0"
-description = "Gin Layout Swagger API 文档"
+description = "Gin Layout API 文档"
 
 [initializer]
 adminAccount = "admin"

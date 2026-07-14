@@ -117,8 +117,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	if cfg.APIDoc.Enabled {
 		logger.Info().
-			Str("url", fmt.Sprintf("http://%s:%d%s/index.html", cfg.Server.Host, cfg.Server.Port, pub.UIPath())).
-			Msg("swagger UI available")
+			Str("url", fmt.Sprintf("http://%s:%d%s", cfg.Server.Host, cfg.Server.Port, pub.UIPath())).
+			Msg("API docs (Redoc) available")
 	}
 
 	logger.Info().Str("host", cfg.Server.Host).Int("port", cfg.Server.Port).Msg("server configured")
