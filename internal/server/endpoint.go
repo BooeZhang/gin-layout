@@ -184,6 +184,43 @@ func (g *RouteGroup) Doc(defaults apidoc.DocDefaults) *RouteGroup {
 	return g
 }
 
+// Protected 标记此组及其子组下的所有路由需要 Bearer Token 身份认证。
+func (g *RouteGroup) Protected() *RouteGroup {
+	g.cloneDocDefaults()
+	g.docDefaults.Visibility = apidoc.VisibilityProtected
+	g.docDefaults.Security = []apidoc.SecurityScheme{apidoc.BearerAuth}
+	return g
+}
+
+// Public 标记此组及其子组下的所有路由为公开，无需身份认证。
+func (g *RouteGroup) Public() *RouteGroup {
+	g.cloneDocDefaults()
+	g.docDefaults.Visibility = apidoc.VisibilityPublic
+	g.docDefaults.Security = nil
+	return g
+}
+
+// Tag 为此组及其子组下的所有路由添加文档标签（追加到已有标签）。
+func (g *RouteGroup) Tag(tags ...string) *RouteGroup {
+	g.cloneDocDefaults()
+	merged := make([]string, 0, len(g.docDefaults.Tags)+len(tags))
+	merged = append(merged, g.docDefaults.Tags...)
+	merged = append(merged, tags...)
+	g.docDefaults.Tags = merged
+	return g
+}
+
+// cloneDocDefaults 确保组拥有独立的文档默认值副本，避免修改影响父组。
+// 如果 docDefaults 为 nil，则创建新的空实例。
+func (g *RouteGroup) cloneDocDefaults() {
+	if g.docDefaults == nil {
+		g.docDefaults = &apidoc.DocDefaults{}
+		return
+	}
+	cp := *g.docDefaults
+	g.docDefaults = &cp
+}
+
 // Use 在此 group 上使用中间件，用于之后注册的路由
 func (g *RouteGroup) Use(middleware ...gin.HandlerFunc) *RouteGroup {
 	g.group.Use(middleware...)
@@ -305,6 +342,16 @@ func (r *Route) Public() *Route {
 		v := apidoc.VisibilityPublic
 		r.record.RouteDoc.Visibility = &v
 		r.record.RouteDoc.Security = []apidoc.SecurityScheme{}
+	}
+	return r
+}
+
+// Protected 标记该路由为需要 Bearer Token 身份认证
+func (r *Route) Protected() *Route {
+	if r.record != nil {
+		v := apidoc.VisibilityProtected
+		r.record.RouteDoc.Visibility = &v
+		r.record.RouteDoc.Security = []apidoc.SecurityScheme{apidoc.BearerAuth}
 	}
 	return r
 }
