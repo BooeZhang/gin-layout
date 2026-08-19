@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cast"
 
 	"gin-layout/internal/domain"
+	"gin-layout/internal/page"
 )
 
 type Handler struct {
@@ -27,7 +28,7 @@ func (h *Handler) Logout(c *gin.Context, req LogoutReq) (*LogoutRes, error) {
 	return h.svc.Logout(c.Request.Context(), req)
 }
 
-func (h *Handler) List(c *gin.Context, req ListUserReq) (domain.PageResult[UserItem], error) {
+func (h *Handler) List(c *gin.Context, req ListUserReq) (page.Result[UserItem], error) {
 	return h.svc.List(c.Request.Context(), req)
 }
 
@@ -42,7 +43,7 @@ func (h *Handler) GetDetails(c *gin.Context, _ struct{}) (UserItem, error) {
 func (h *Handler) Update(c *gin.Context, req UpdateUserReq) (UpdateUserRes, error) {
 	id := cast.ToInt64(c.Param("id"))
 	if id == 0 {
-		return UpdateUserRes{}, domain.ErrInvalidUserID
+		return UpdateUserRes{}, ErrInvalidUserID
 	}
 	req.UserID = id
 	return h.svc.Update(c.Request.Context(), req)
@@ -51,7 +52,7 @@ func (h *Handler) Update(c *gin.Context, req UpdateUserReq) (UpdateUserRes, erro
 func (h *Handler) Delete(c *gin.Context, _ struct{}) (struct{}, error) {
 	id := cast.ToInt64(c.Param("id"))
 	if id == 0 {
-		return struct{}{}, domain.ErrInvalidUserID
+		return struct{}{}, ErrInvalidUserID
 	}
 	return struct{}{}, h.svc.Delete(c.Request.Context(), id)
 }

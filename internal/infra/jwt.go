@@ -8,7 +8,7 @@ import (
 	jwtlib "github.com/golang-jwt/jwt/v5"
 
 	"gin-layout/config"
-	"gin-layout/internal/domain"
+	"gin-layout/internal/token"
 )
 
 type jwtClaims struct {
@@ -31,23 +31,23 @@ func NewJWTIssuer(cfg *config.JWTConfig) *JWTIssuer {
 	}
 }
 
-func (i *JWTIssuer) Issue(userID int64, subject string) (domain.TokenPair, error) {
-	accessToken, err := i.sign(userID, subject, domain.TokenTypeAccess, i.accessExpired)
+func (i *JWTIssuer) Issue(userID int64, subject string) (token.Pair, error) {
+	accessToken, err := i.sign(userID, subject, token.TypeAccess, i.accessExpired)
 	if err != nil {
-		return domain.TokenPair{}, err
+		return token.Pair{}, err
 	}
-	refreshToken, err := i.sign(userID, subject, domain.TokenTypeRefresh, i.refreshExpired)
+	refreshToken, err := i.sign(userID, subject, token.TypeRefresh, i.refreshExpired)
 	if err != nil {
-		return domain.TokenPair{}, err
+		return token.Pair{}, err
 	}
-	return domain.TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	return token.Pair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func (i *JWTIssuer) Parse(raw string) (*domain.TokenClaims, error) {
+func (i *JWTIssuer) Parse(raw string) (*token.Claims, error) {
 	parsed := &jwtClaims{}
 	jwtToken, err := jwtlib.ParseWithClaims(raw, parsed, func(jwtToken *jwtlib.Token) (any, error) {
 		if jwtToken.Method != jwtlib.SigningMethodHS256 {
-			return nil, fmt.Errorf("%w: %s", domain.ErrTokenInvalid, jwtToken.Header["alg"])
+			return nil, fmt.Errorf("%w: %s", token.ErrTokenInvalid, jwtToken.Header["alg"])
 		}
 		return i.secret, nil
 	}, jwtlib.WithValidMethods([]string{jwtlib.SigningMethodHS256.Alg()}))
@@ -55,14 +55,14 @@ func (i *JWTIssuer) Parse(raw string) (*domain.TokenClaims, error) {
 		return nil, normalizeJWTError(err)
 	}
 	if !jwtToken.Valid {
-		return nil, domain.ErrTokenInvalid
+		return nil, token.ErrTokenInvalid
 	}
 
 	var expiresAt time.Time
 	if parsed.ExpiresAt != nil {
 		expiresAt = parsed.ExpiresAt.Time
 	}
-	return &domain.TokenClaims{
+	return &token.Claims{
 		UserID:    parsed.UserID,
 		Subject:   parsed.Subject,
 		Type:      parsed.Type,
@@ -87,12 +87,12 @@ func (i *JWTIssuer) sign(userID int64, subject, tokenType string, ttl time.Durat
 func normalizeJWTError(err error) error {
 	switch {
 	case errors.Is(err, jwtlib.ErrSignatureInvalid):
-		return domain.ErrTokenInvalid
+		return token.ErrTokenInvalid
 	case errors.Is(err, jwtlib.ErrTokenExpired):
-		return domain.ErrTokenExpired
+		return token.ErrTokenExpired
 	case errors.Is(err, jwtlib.ErrTokenNotValidYet):
-		return domain.ErrTokenNotActive
+		return token.ErrTokenNotActive
 	default:
-		return domain.ErrTokenInvalid
+		return token.ErrTokenInvalid
 	}
 }

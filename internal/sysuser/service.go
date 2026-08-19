@@ -10,24 +10,39 @@ import (
 
 	"gin-layout/internal/common"
 	"gin-layout/internal/domain"
+	"gin-layout/internal/page"
+	"gin-layout/internal/policy"
+	"gin-layout/internal/reqctx"
+	"gin-layout/internal/token"
 )
 
 type Service struct {
 	common.BaseService
 
+	tokens      token.Manager
 	sysUserRepo Repository
-	policy      common.PolicyManager
+	policy      policy.Manager
 	roles       RoleFinder
 	menus       MenuFinder
 }
 
-func NewService(base common.BaseService, users Repository, policy common.PolicyManager, roles RoleFinder, menus MenuFinder) *Service {
+type Deps struct {
+	Base   common.BaseService
+	Tokens token.Manager
+	Users  Repository
+	Policy policy.Manager
+	Roles  RoleFinder
+	Menus  MenuFinder
+}
+
+func NewService(deps Deps) *Service {
 	return &Service{
-		BaseService: base,
-		sysUserRepo: users,
-		policy:      policy,
-		roles:       roles,
-		menus:       menus,
+		BaseService: deps.Base,
+		tokens:      deps.Tokens,
+		sysUserRepo: deps.Users,
+		policy:      deps.Policy,
+		roles:       deps.Roles,
+		menus:       deps.Menus,
 	}
 }
 
@@ -37,18 +52,18 @@ func (s *Service) Login(ctx context.Context, req LoginReq) (*LoginRes, error) {
 
 	u, err := s.sysUserRepo.FindByAccount(ctx, req.Account)
 	if err != nil {
-		return nil, fmt.Errorf("login: %w", domain.ErrAccountOrPassword)
+		return nil, fmt.Errorf("login: %w", ErrAccountOrPassword)
 	}
 
 	if !u.Enabled {
-		return nil, domain.ErrUserDisabled
+		return nil, ErrUserDisabled
 	}
 
 	if !u.ComparePassword(req.Password) {
-		return nil, domain.ErrAccountOrPassword
+		return nil, ErrAccountOrPassword
 	}
 
-	tokens, err := s.TokenManager.Issue(u.ID, u.Account)
+	tokens, err := s.tokens.Issue(u.ID, u.Account)
 	if err != nil {
 		return nil, fmt.Errorf("issue token (userID=%d): %w", u.ID, err)
 	}
@@ -62,7 +77,7 @@ func (s *Service) Login(ctx context.Context, req LoginReq) (*LoginRes, error) {
 }
 
 func (s *Service) Logout(ctx context.Context, _ LogoutReq) (*LogoutRes, error) {
-	if _, err := s.TokenManager.RevokeCurrent(ctx); err != nil {
+	if _, err := s.tokens.RevokeCurrent(ctx); err != nil {
 		return nil, err
 	}
 	return &LogoutRes{}, nil
@@ -72,27 +87,27 @@ func (s *Service) RefreshToken(ctx context.Context, req RefreshTokenReq) (*Refre
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", req).Msg("refresh token")
 
-	claims, err := s.TokenManager.Parse(req.RefreshToken)
+	claims, err := s.tokens.Parse(req.RefreshToken)
 	if err != nil {
 		return nil, err
 	}
-	if claims.Type != domain.TokenTypeRefresh {
-		return nil, domain.ErrTokenInvalid
+	if claims.Type != token.TypeRefresh {
+		return nil, token.ErrTokenInvalid
 	}
 
-	revoked, err := s.TokenManager.IsRevoked(ctx, req.RefreshToken)
+	revoked, err := s.tokens.IsRevoked(ctx, req.RefreshToken)
 	if err != nil {
 		return nil, err
 	}
 	if revoked {
-		return nil, domain.ErrTokenRevoked
+		return nil, token.ErrTokenRevoked
 	}
 
-	if err := s.TokenManager.Revoke(ctx, req.RefreshToken, claims.UserID, claims.ExpiresAt); err != nil {
+	if err := s.tokens.Revoke(ctx, req.RefreshToken, claims.UserID, claims.ExpiresAt); err != nil {
 		return nil, err
 	}
 
-	tokens, err := s.TokenManager.Issue(claims.UserID, claims.Subject)
+	tokens, err := s.tokens.Issue(claims.UserID, claims.Subject)
 	if err != nil {
 		return nil, err
 	}
@@ -103,17 +118,17 @@ func (s *Service) RefreshToken(ctx context.Context, req RefreshTokenReq) (*Refre
 	}, nil
 }
 
-func (s *Service) List(ctx context.Context, in ListUserReq) (res domain.PageResult[UserItem], err error) {
+func (s *Service) List(ctx context.Context, in ListUserReq) (res page.Result[UserItem], err error) {
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("user list")
 
 	q := userListQuery{
-		PageRequest: domain.PageRequest{Page: in.Page, PageSize: in.PageSize},
-		Account:     in.Account,
-		NickName:    in.NickName,
-		Email:       in.Email,
-		Phone:       in.Phone,
-		Enabled:     in.Enabled,
+		Request:  in.Request,
+		Account:  in.Account,
+		NickName: in.NickName,
+		Email:    in.Email,
+		Phone:    in.Phone,
+		Enabled:  in.Enabled,
 	}
 
 	result, total, err := s.sysUserRepo.List(ctx, q)
@@ -125,7 +140,7 @@ func (s *Service) List(ctx context.Context, in ListUserReq) (res domain.PageResu
 		return s.toUserItem(item)
 	})
 
-	return domain.NewPageResult(items, total, in.Page, in.PageSize), nil
+	return page.NewResult(items, total, q.Request.Page, q.Request.PageSize), nil
 }
 
 func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserRes, err error) {
@@ -133,7 +148,7 @@ func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserR
 	logger.Debug().Any("input", in).Msg("creating user")
 
 	if existing, err := s.sysUserRepo.FindByAccount(ctx, in.Account); err == nil && existing != nil {
-		return res, domain.ErrAccountExists
+		return res, ErrAccountExists
 	}
 
 	u := &domain.SysUser{
@@ -168,9 +183,9 @@ func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserR
 }
 
 func (s *Service) GetDetails(ctx context.Context) (res UserItem, err error) {
-	currUser, ok := domain.CurrentUserFromContext(ctx)
+	currUser, ok := reqctx.CurrentUserFromContext(ctx)
 	if !ok {
-		return res, domain.ErrNotLogin
+		return res, token.ErrNotLogin
 	}
 	user, err := s.sysUserRepo.FindByIDWithRoles(ctx, currUser.UserID)
 	if err != nil {
@@ -237,7 +252,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	}
 
 	if s.IsAdmin(u.Account) {
-		return domain.ErrCannotDeleteAdmin
+		return ErrCannotDeleteAdmin
 	}
 
 	if err := s.sysUserRepo.Delete(ctx, id); err != nil {
@@ -247,9 +262,9 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 }
 
 func (s *Service) GetCurrentUserMenus(ctx context.Context) ([]domain.MenuItem, error) {
-	currUser, ok := domain.CurrentUserFromContext(ctx)
+	currUser, ok := reqctx.CurrentUserFromContext(ctx)
 	if !ok {
-		return nil, domain.ErrNotLogin
+		return nil, token.ErrNotLogin
 	}
 
 	if s.IsAdmin(currUser.Account) {

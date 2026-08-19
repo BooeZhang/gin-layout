@@ -1,4 +1,4 @@
-package domain
+package page
 
 const (
 	DefaultPage     = 1
@@ -6,16 +6,16 @@ const (
 	MaxPageSize     = 100
 )
 
-type PageRequest struct {
-	Page     int
-	PageSize int
+type Request struct {
+	Page     int `json:"page" form:"page"`
+	PageSize int `json:"pageSize" form:"pageSize"`
 }
 
-func NewPageRequest(page, pageSize int) PageRequest {
-	return PageRequest{Page: page, PageSize: pageSize}.Normalize()
+func NewRequest(pageNum, pageSize int) Request {
+	return Request{Page: pageNum, PageSize: pageSize}.Normalize()
 }
 
-func (p PageRequest) Normalize() PageRequest {
+func (p Request) Normalize() Request {
 	if p.Page < DefaultPage {
 		p.Page = DefaultPage
 	}
@@ -25,36 +25,36 @@ func (p PageRequest) Normalize() PageRequest {
 	return p
 }
 
-func (p PageRequest) Offset() int {
+func (p Request) Offset() int {
 	return (p.Page - 1) * p.PageSize
 }
 
-type PageResult[T any] struct {
+type Result[T any] struct {
 	Items    []T   `json:"items"`
 	Total    int64 `json:"total"`
 	Page     int   `json:"page"`
 	PageSize int   `json:"pageSize"`
 }
 
-func NewPageResult[T any](items []T, total int64, page, pageSize int) PageResult[T] {
+func NewResult[T any](items []T, total int64, pageNum, pageSize int) Result[T] {
 	if len(items) <= 0 {
 		items = []T{}
 	}
-	return PageResult[T]{
+	return Result[T]{
 		Items:    items,
 		Total:    total,
-		Page:     page,
+		Page:     pageNum,
 		PageSize: pageSize,
 	}
 }
 
-func (r PageResult[T]) TotalPages() int {
+func (r Result[T]) TotalPages() int {
 	if r.Total == 0 || r.PageSize == 0 {
 		return 0
 	}
 	return int((r.Total + int64(r.PageSize) - 1) / int64(r.PageSize))
 }
 
-func (r PageResult[T]) HasMore() bool {
+func (r Result[T]) HasMore() bool {
 	return r.Page < r.TotalPages()
 }

@@ -44,7 +44,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response[internal.apidoc.goldenLoginRes]"
+              "$ref": "#/definitions/web.Response[internal.apidoc.goldenLoginRes]"
             }
           },
           "400": {
@@ -82,7 +82,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response[internal.apidoc.goldenTokenRes]"
+              "$ref": "#/definitions/web.Response[internal.apidoc.goldenTokenRes]"
             }
           },
           "400": {
@@ -124,7 +124,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response[internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]]"
+              "$ref": "#/definitions/web.Response[internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]]"
             }
           },
           "400": {
@@ -174,7 +174,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response[internal.apidoc.goldenUserListRes]"
+              "$ref": "#/definitions/web.Response[internal.apidoc.goldenUserListRes]"
             }
           },
           "400": {
@@ -218,7 +218,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response[internal.apidoc.goldenUserRes]"
+              "$ref": "#/definitions/web.Response[internal.apidoc.goldenUserRes]"
             }
           },
           "400": {
@@ -270,7 +270,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response"
+              "$ref": "#/definitions/web.Response"
             }
           },
           "400": {
@@ -320,7 +320,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response[internal.apidoc.goldenUserRes]"
+              "$ref": "#/definitions/web.Response[internal.apidoc.goldenUserRes]"
             }
           },
           "400": {
@@ -362,7 +362,7 @@
           "200": {
             "description": "成功",
             "schema": {
-              "$ref": "#/definitions/common.Response[internal.apidoc.goldenHealthRes]"
+              "$ref": "#/definitions/web.Response[internal.apidoc.goldenHealthRes]"
             }
           },
           "400": {
@@ -379,119 +379,6 @@
     }
   },
   "definitions": {
-    "common.Response": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "description": "业务状态码，0 表示成功"
-        },
-        "data": {
-          "type": "object",
-          "description": "响应数据"
-        },
-        "message": {
-          "type": "string",
-          "description": "提示信息"
-        }
-      }
-    },
-    "common.Response[internal.apidoc.goldenHealthRes]": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "description": "业务状态码，0 表示成功"
-        },
-        "data": {
-          "$ref": "#/definitions/internal.apidoc.goldenHealthRes"
-        },
-        "message": {
-          "type": "string",
-          "description": "提示信息"
-        }
-      }
-    },
-    "common.Response[internal.apidoc.goldenLoginRes]": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "description": "业务状态码，0 表示成功"
-        },
-        "data": {
-          "$ref": "#/definitions/internal.apidoc.goldenLoginRes"
-        },
-        "message": {
-          "type": "string",
-          "description": "提示信息"
-        }
-      }
-    },
-    "common.Response[internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]]": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "description": "业务状态码，0 表示成功"
-        },
-        "data": {
-          "$ref": "#/definitions/internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]"
-        },
-        "message": {
-          "type": "string",
-          "description": "提示信息"
-        }
-      }
-    },
-    "common.Response[internal.apidoc.goldenTokenRes]": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "description": "业务状态码，0 表示成功"
-        },
-        "data": {
-          "$ref": "#/definitions/internal.apidoc.goldenTokenRes"
-        },
-        "message": {
-          "type": "string",
-          "description": "提示信息"
-        }
-      }
-    },
-    "common.Response[internal.apidoc.goldenUserListRes]": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "description": "业务状态码，0 表示成功"
-        },
-        "data": {
-          "$ref": "#/definitions/internal.apidoc.goldenUserListRes"
-        },
-        "message": {
-          "type": "string",
-          "description": "提示信息"
-        }
-      }
-    },
-    "common.Response[internal.apidoc.goldenUserRes]": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "description": "业务状态码，0 表示成功"
-        },
-        "data": {
-          "$ref": "#/definitions/internal.apidoc.goldenUserRes"
-        },
-        "message": {
-          "type": "string",
-          "description": "提示信息"
-        }
-      }
-    },
     "internal.apidoc.goldenCreateUserReq": {
       "type": "object",
       "properties": {
@@ -654,6 +541,119 @@
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "web.Response": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "type": "object",
+          "description": "响应数据"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "web.Response[internal.apidoc.goldenHealthRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenHealthRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "web.Response[internal.apidoc.goldenLoginRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenLoginRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "web.Response[internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenPageResult[internal.apidoc.goldenRoleItem]"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "web.Response[internal.apidoc.goldenTokenRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenTokenRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "web.Response[internal.apidoc.goldenUserListRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenUserListRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
+        }
+      }
+    },
+    "web.Response[internal.apidoc.goldenUserRes]": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "业务状态码，0 表示成功"
+        },
+        "data": {
+          "$ref": "#/definitions/internal.apidoc.goldenUserRes"
+        },
+        "message": {
+          "type": "string",
+          "description": "提示信息"
         }
       }
     }

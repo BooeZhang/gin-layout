@@ -350,10 +350,10 @@ func (b *Builder) buildResponses(op *OperationModel, rec *EndpointRecord, spec *
 }
 
 // 生成带有真实数据类型的响应信封 schema。
-// 返回类似 "#/definitions/common.Response[user.UserItem]" 的定义键。
+// 返回类似 "#/definitions/web.Response[user.UserItem]" 的定义键。
 func (b *Builder) buildResponseSchema(rec *EndpointRecord, spec *SpecModel) string {
 	if rec.ResType == nil {
-		return "#/definitions/common.Response"
+		return "#/definitions/web.Response"
 	}
 
 	resType := rec.ResType
@@ -361,19 +361,19 @@ func (b *Builder) buildResponseSchema(rec *EndpointRecord, spec *SpecModel) stri
 		resType = resType.Elem()
 	}
 
-	// 对于空结构体，使用基础的 common.Response。
+	// 对于空结构体，使用基础的 web.Response。
 	if resType.Kind() == reflect.Struct && resType.NumField() == 0 {
-		return "#/definitions/common.Response"
+		return "#/definitions/web.Response"
 	}
 
 	// 将响应类型注册为定义。
 	dataRef := b.schemas.addDefinition(resType)
 	if dataRef == "" {
-		return "#/definitions/common.Response"
+		return "#/definitions/web.Response"
 	}
 
 	// 创建带有具体数据类型的包装响应定义。
-	wrapperName := "common.Response[" + dataRef + "]"
+	wrapperName := "web.Response[" + dataRef + "]"
 	if _, ok := spec.Definitions[wrapperName]; !ok {
 		spec.Definitions[wrapperName] = SchemaModel{
 			Type: "object",
@@ -388,9 +388,9 @@ func (b *Builder) buildResponseSchema(rec *EndpointRecord, spec *SpecModel) stri
 	return "#/definitions/" + wrapperName
 }
 
-// 预注册基础的 common.Response 定义。
+// 预注册基础的 web.Response 定义。
 func (b *Builder) registerResponseEnvelope(spec *SpecModel) {
-	spec.Definitions["common.Response"] = SchemaModel{
+	spec.Definitions["web.Response"] = SchemaModel{
 		Type: "object",
 		Properties: map[string]SchemaModel{
 			"code":    {Type: "integer", Description: "业务状态码，0 表示成功"},

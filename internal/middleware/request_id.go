@@ -8,20 +8,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
 
-	"gin-layout/internal/domain"
+	"gin-layout/internal/reqctx"
 )
 
 func RequestID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requestID := c.GetHeader(domain.RequestIDHeader)
+		requestID := c.GetHeader(reqctx.RequestIDHeader)
 		if requestID == "" {
 			requestID = newRequestID()
-			c.Request.Header.Set(domain.RequestIDHeader, requestID)
+			c.Request.Header.Set(reqctx.RequestIDHeader, requestID)
 		}
 
-		c.Set(domain.RequestIDKey, requestID)
-		c.Header(domain.RequestIDHeader, requestID)
-		c.Request = c.Request.WithContext(domain.WithRequestID(c.Request.Context(), requestID))
+		c.Set(reqctx.RequestIDKey, requestID)
+		c.Header(reqctx.RequestIDHeader, requestID)
+		c.Request = c.Request.WithContext(reqctx.WithRequestID(c.Request.Context(), requestID))
 
 		c.Next()
 	}

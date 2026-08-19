@@ -253,7 +253,7 @@ type goldenDeleteReq struct {
 	ID uint `json:"id" form:"id" uri:"id"`
 }
 
-// goldenPageResult mirrors domain.PageResult for testing generic type doc generation.
+// goldenPageResult mirrors page.Result for testing generic type doc generation.
 type goldenPageResult[T any] struct {
 	Items    []T   `json:"items"`
 	Total    int64 `json:"total"`

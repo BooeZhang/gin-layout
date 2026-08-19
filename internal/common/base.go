@@ -2,43 +2,34 @@ package common
 
 import (
 	"context"
-	"os"
 
 	"github.com/rs/zerolog"
 
 	"gin-layout/config"
-	"gin-layout/internal/domain"
+	"gin-layout/internal/infra"
 )
 
+// BaseService 只收敛跨 service 的日志和管理员判定，避免每个 feature 重复实现。
 type BaseService struct {
-	Logger       *zerolog.Logger
-	Cfg          *config.Config
-	TokenManager TokenManager
+	logger *zerolog.Logger
+	cfg    *config.Config
 }
 
-func NewBaseService(cfg *config.Config, logger *zerolog.Logger, token TokenManager) BaseService {
-	if logger == nil {
-		l := zerolog.New(os.Stdout).With().Timestamp().Logger()
-		logger = &l
-	}
-	return BaseService{Logger: logger, Cfg: cfg, TokenManager: token}
+func NewBaseService(cfg *config.Config, logger *zerolog.Logger) BaseService {
+	return BaseService{cfg: cfg, logger: logger}
 }
 
 func (s BaseService) Log(ctx context.Context) zerolog.Logger {
-	logCtx := s.Logger.With()
-	if requestID, ok := domain.RequestIDFromContext(ctx); ok {
-		logCtx = logCtx.Str(domain.RequestIDKey, requestID)
+	if s.logger == nil {
+		return zerolog.Nop()
 	}
-	if user, ok := domain.CurrentUserFromContext(ctx); ok {
-		logCtx = logCtx.Int64(domain.UserIDKey, user.UserID).Str(domain.UserKey, user.Account)
-	}
-	return logCtx.Logger()
+	return infra.LogFromContext(ctx, s.logger)
 }
 
 func (s BaseService) IsAdmin(account string) bool {
-	return account == s.Cfg.Initializer.AdminAccount
+	return s.cfg != nil && account == s.cfg.Initializer.AdminAccount
 }
 
 func (s BaseService) IsAdminRole(roleCode string) bool {
-	return roleCode == s.Cfg.Initializer.AdminRoleCode
+	return s.cfg != nil && roleCode == s.cfg.Initializer.AdminRoleCode
 }

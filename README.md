@@ -8,7 +8,7 @@
 
 - **分层架构** — Handler → Service → Repository 三层模式，清晰的职责分离
 - **依赖注入** — bootstrap 模块手动管理依赖，无第三方 DI 框架，依赖关系一目了然
-- **泛型 CRUD** — 使用 Go 1.18+ 泛型实现 `CRUDRepository[T, ID]`，避免重复代码
+- **按 feature 聚合** — sysuser/role/menu 各自拥有 DTO、错误和 GORM 模型；BaseService 只负责日志与管理员判定，CRUDRepository 只复用基础持久化算法，不承载领域业务
 
 ### 身份认证与权限
 
@@ -90,6 +90,7 @@ gin-layout/
 │   │   ├── service.go                   # 用户与认证业务逻辑
 │   │   ├── repo.go                      # 用户和关联表数据访问
 │   │   ├── dto.go                       # DTO 定义
+│   │   ├── errors.go                    # 用户/认证业务错误
 │   │   └── ports.go                     # 接口定义
 │   │
 │   ├── role/                            # 角色管理
@@ -97,6 +98,7 @@ gin-layout/
 │   │   ├── service.go                   # 角色业务逻辑
 │   │   ├── repo.go                      # 角色数据访问
 │   │   ├── dto.go                       # DTO 定义
+│   │   ├── errors.go                    # 角色业务错误
 │   │   └── ports.go                     # 接口定义
 │   │
 │   ├── menu/                            # 菜单管理（树形结构）
@@ -105,6 +107,7 @@ gin-layout/
 │   │   ├── repo.go                      # 菜单数据访问
 │   │   ├── helper.go                    # 树形结构处理辅助函数
 │   │   ├── dto.go                       # DTO 定义
+│   │   ├── errors.go                    # 菜单业务错误
 │   │   └── ports.go                     # 接口定义
 │   │
 │   ├── health/                          # 健康检查
@@ -121,19 +124,17 @@ gin-layout/
 │   │   ├── recovery.go                  # 恐慌恢复中间件
 │   │   └── request_id.go                # 请求 ID 链路追踪中间件
 │   │
-│   ├── domain/                          # 领域模型和错误定义
+│   ├── domain/                          # 纯领域模型和 DomainError
 │   │   ├── sys_user.go                  # SysUser 领域模型
 │   │   ├── role.go                      # Role 领域模型
-│   │   ├── menu.go                      # Menu 领域模型
+│   │   ├── menu.go                      # Menu/MenuItem 领域模型
 │   │   ├── join.go                      # 多对多关联结构定义
-│   │   ├── page.go                      # 分页请求/响应（泛型）
-│   │   ├── context.go                   # CurrentUser/Token 上下文传递
-│   │   ├── error.go                     # DomainError 业务错误定义
-│   │   └── errors.go                    # 业务错误常量
+│   │   ├── error.go                     # DomainError/CodedError 定义
+│   │   └── errors.go                    # 通用业务错误常量
 │   │
 │   ├── infra/                           # 基础设施层
 │   │   ├── database.go                  # 数据库连接与迁移
-│   │   ├── crud.go                      # 泛型 CRUDRepository 实现
+│   │   ├── crud.go                      # 基础 CRUDRepository 算法复用
 │   │   ├── jwt.go                       # JWT 令牌服务
 │   │   ├── logger.go                    # zerolog 日志初始化
 │   │   ├── policy.go                    # Casbin 权限策略管理
@@ -158,11 +159,23 @@ gin-layout/
 │   │   ├── swagger2_renderer.go         # OpenAPI/Swagger 2.0 渲染
 │   │   └── defaults.go                  # 文档默认值
 │   │
-│   └── common/                          # 通用工具
-│       ├── response.go                  # 统一响应格式
-│       ├── base.go                      # 基础服务
-│       ├── interfaces.go                # 通用接口定义
-│       └── token.go                     # Token 工具函数
+│   ├── common/                          # service 公共支撑
+│   │   └── base.go                      # 日志上下文与管理员判定
+│   │
+│   ├── page/                            # 分页请求/响应（泛型）
+│   │   └── page.go                      # Request/Result 与分页常量
+│   │
+│   ├── policy/                          # RBAC 权限接口
+│   │   └── policy.go                    # Manager/PermissionResolver/ErrNotPermission
+│   │
+│   ├── reqctx/                          # 请求上下文
+│   │   └── context.go                   # CurrentUser/Token/请求 ID 存取
+│   │
+│   ├── token/                           # Token 领域接口
+│   │   └── token.go                     # Manager/Issuer/Claims/错误与 Bearer 解析
+│   │
+│   └── web/                             # 统一 HTTP 响应
+│       └── response.go                  # Response/OK/Error/DecodeError
 │
 ├── deploy/                              # 部署配置
 │   ├── Dockerfile                       # 多阶段构建
@@ -465,7 +478,7 @@ A: 修改 `etc/config.toml` 中的 `[database]` 配置，支持 mysql、postgres
 A: 使用 Refresh Token 调用 `/api/auth/refresh-token` 端点获取新的 Access Token
 
 **Q: 如何自定义业务错误码？**
-A: 在 `internal/domain/errors.go` 中定义错误，返回 `DomainError` 类型
+A: 在对应 feature 包（如 `internal/sysuser/errors.go`、`internal/role/errors.go`）中定义错误，返回 `DomainError` 类型
 
 **Q: 生产环境怎么部署？**
 A:

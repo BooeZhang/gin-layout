@@ -118,7 +118,7 @@ type ParamModel struct {
 // ResponseModel 描述特定状态码的 API 响应。
 type ResponseModel struct {
 	Description string
-	SchemaRef   string // "#/definitions/common.Response" or custom
+	SchemaRef   string // "#/definitions/web.Response" or custom
 }
 
 // SchemaModel 表示 JSON Schema 定义条目。

@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"gin-layout/internal/common"
 	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
+	"gin-layout/internal/web"
 )
 
 func ErrorHandler(logger *infra.Logger) gin.HandlerFunc {
@@ -35,7 +35,7 @@ func ErrorHandler(logger *infra.Logger) gin.HandlerFunc {
 				Msg("request failed with unknown error")
 		}
 
-		common.Error(c, err)
+		web.Error(c, err)
 		c.Abort()
 	}
 }

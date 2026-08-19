@@ -12,10 +12,12 @@ import (
 	"gin-layout/internal/health"
 	"gin-layout/internal/infra"
 	"gin-layout/internal/menu"
+	"gin-layout/internal/policy"
 	"gin-layout/internal/role"
 	"gin-layout/internal/router"
 	"gin-layout/internal/server"
 	"gin-layout/internal/sysuser"
+	"gin-layout/internal/token"
 )
 
 const blacklistCleanupInterval = 1 * time.Hour
@@ -49,12 +51,19 @@ type appRepositories struct {
 	tokenBlacklist *infra.TokenBlacklistRepository
 }
 
+type serviceDeps struct {
+	Cfg      *config.Config
+	Logger   *infra.Logger
+	Tokens   token.Manager
+	Policies policy.Manager
+}
+
 type appServices struct {
 	health       *health.Service
 	users        *sysuser.Service
 	roles        *role.Service
 	menus        *menu.Service
-	tokenManager common.TokenManager
+	tokenManager token.Manager
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -81,9 +90,22 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	services := newServices(cfg, logger, infra_, repos, policies)
+	tokenManager := token.NewManager(infra.NewJWTIssuer(&cfg.JWT), repos.tokenBlacklist)
+	services := newServices(serviceDeps{
+		Cfg:      cfg,
+		Logger:   logger,
+		Tokens:   tokenManager,
+		Policies: policies,
+	}, infra_, repos)
 
-	init := initializer.NewInitializer(cfg, repos.users, repos.roles, repos.menus, policies, logger)
+	init := initializer.NewInitializer(initializer.Deps{
+		Cfg:      cfg,
+		Users:    repos.users,
+		Roles:    repos.roles,
+		Menus:    repos.menus,
+		Policies: policies,
+		Logger:   logger,
+	})
 	if err := init.Run(context.Background()); err != nil {
 		logger.Error().Err(err).Msg("bootstrap initialization failed")
 		return nil, err
@@ -171,29 +193,34 @@ func newRepositories(db *infra.Database) appRepositories {
 	}
 }
 
-func newServices(
-	cfg *config.Config,
-	logger *infra.Logger,
-	infra_ appInfra,
-	repos appRepositories,
-	policies common.PolicyManager,
-) appServices {
-	tokens := infra.NewJWTIssuer(&cfg.JWT)
-	tokenManager := common.NewTokenManager(tokens, repos.tokenBlacklist)
-	baseSvc := common.NewBaseService(cfg, logger, tokenManager)
-	menuSvc := menu.NewService(baseSvc, repos.menus)
-	roleSvc := role.NewService(baseSvc, repos.roles, repos.users, menuSvc, policies)
+func newServices(deps serviceDeps, infra_ appInfra, repos appRepositories) appServices {
+	base := common.NewBaseService(deps.Cfg, deps.Logger)
+	menuSvc := menu.NewService(menu.Deps{Base: base, Repo: repos.menus})
+	roleSvc := role.NewService(role.Deps{
+		Base:   base,
+		Repo:   repos.roles,
+		Users:  repos.users,
+		Menus:  menuSvc,
+		Policy: deps.Policies,
+	})
 
 	return appServices{
-		health:       health.NewService(infra_.db, infra_.redis),
-		users:        sysuser.NewService(baseSvc, repos.users, policies, roleSvc, menuSvc),
+		health: health.NewService(infra_.db, infra_.redis),
+		users: sysuser.NewService(sysuser.Deps{
+			Base:   base,
+			Tokens: deps.Tokens,
+			Users:  repos.users,
+			Policy: deps.Policies,
+			Roles:  roleSvc,
+			Menus:  menuSvc,
+		}),
 		roles:        roleSvc,
 		menus:        menuSvc,
-		tokenManager: tokenManager,
+		tokenManager: deps.Tokens,
 	}
 }
 
-func newAdminRouter(logger *infra.Logger, services appServices, policies common.PolicyManager, docRegistry *apidoc.Registry) *router.AdminRouter {
+func newAdminRouter(logger *infra.Logger, services appServices, policies policy.Manager, docRegistry *apidoc.Registry) *router.AdminRouter {
 	return router.NewAdminRouter(router.AdminRouterConfig{
 		Health:      health.NewHandler(services.health),
 		User:        sysuser.NewHandler(services.users),

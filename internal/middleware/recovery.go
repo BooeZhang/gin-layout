@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"gin-layout/internal/common"
 	"gin-layout/internal/infra"
+	"gin-layout/internal/web"
 )
 
 func Recovery(logger *infra.Logger) gin.HandlerFunc {
@@ -22,7 +22,7 @@ func Recovery(logger *infra.Logger) gin.HandlerFunc {
 					Str("stack", string(debug.Stack())).
 					Msg("panic recovered")
 
-				common.Error(c, err)
+				web.Error(c, err)
 				c.Abort()
 			}
 		}()

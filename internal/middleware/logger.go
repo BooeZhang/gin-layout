@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 
-	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
+	"gin-layout/internal/reqctx"
 )
 
 func RequestLogger(logger *infra.Logger) gin.HandlerFunc {
@@ -36,11 +36,11 @@ func RequestLogger(logger *infra.Logger) gin.HandlerFunc {
 			Int("status", c.Writer.Status()).
 			Str("method", c.Request.Method).
 			Str("path", path).
-			Str(domain.RequestIDKey, c.GetString(domain.RequestIDKey)).
+			Str(reqctx.RequestIDKey, c.GetString(reqctx.RequestIDKey)).
 			Str("ip", c.ClientIP())
 
-		if currentUser, ok := domain.CurrentUserFromContext(c.Request.Context()); ok {
-			logEvent = logEvent.Int64(domain.UserIDKey, currentUser.UserID).Str(domain.UserKey, currentUser.Account)
+		if currentUser, ok := reqctx.CurrentUserFromContext(c.Request.Context()); ok {
+			logEvent = logEvent.Int64(reqctx.UserIDKey, currentUser.UserID).Str(reqctx.UserKey, currentUser.Account)
 		}
 
 		if len(c.Errors) > 0 {

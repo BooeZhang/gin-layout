@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"gin-layout/internal/apidoc"
-	"gin-layout/internal/common"
+	"gin-layout/internal/web"
 )
 
 // TypedHandler 是带类型请求和响应的 handler 签名。
@@ -27,7 +27,7 @@ func WrapJSON[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 			_ = c.Error(err)
 			return
 		}
-		common.OK(c, res)
+		web.OK(c, res)
 	}
 }
 
@@ -44,7 +44,7 @@ func WrapQuery[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 			_ = c.Error(err)
 			return
 		}
-		common.OK(c, res)
+		web.OK(c, res)
 	}
 }
 
@@ -61,7 +61,7 @@ func WrapForm[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 			_ = c.Error(err)
 			return
 		}
-		common.OK(c, res)
+		web.OK(c, res)
 	}
 }
 
@@ -87,7 +87,7 @@ func WrapAuto[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 			_ = c.Error(err)
 			return
 		}
-		common.OK(c, res)
+		web.OK(c, res)
 	}
 }
 

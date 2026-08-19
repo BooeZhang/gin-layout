@@ -306,7 +306,7 @@ func TestShortenGenericTypeArgs(t *testing.T) {
 }
 
 func TestTypeSchemaName_GenericPageResult(t *testing.T) {
-	// Simulates domain.PageResult[user.UserItem] — generic type with cross-package type arg
+	// Simulates page.Result[user.UserItem] — generic type with cross-package type arg
 	type testPageResult[T any] struct {
 		Items []T `json:"items"`
 	}

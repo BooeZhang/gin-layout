@@ -10,6 +10,7 @@ import (
 
 	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
+	"gin-layout/internal/page"
 )
 
 type RoleModel struct {
@@ -75,7 +76,6 @@ func NewRepository(db *gorm.DB) *RoleRepository {
 		ToModel:  toRoleModel,
 		ToDomain: RoleModel.toDomain,
 	}
-
 	return &RoleRepository{
 		db:             db,
 		CRUDRepository: infra.NewCRUDRepository[domain.Role, RoleModel, int64](db, mapper),
@@ -83,7 +83,7 @@ func NewRepository(db *gorm.DB) *RoleRepository {
 }
 
 type roleListQuery struct {
-	domain.PageRequest
+	page.Request
 	Name    *string
 	Code    *string
 	Enabled *bool

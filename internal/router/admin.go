@@ -5,13 +5,14 @@ import (
 	"github.com/rs/zerolog"
 
 	"gin-layout/internal/apidoc"
-	"gin-layout/internal/common"
 	"gin-layout/internal/health"
 	"gin-layout/internal/menu"
 	mw "gin-layout/internal/middleware"
+	"gin-layout/internal/policy"
 	"gin-layout/internal/role"
 	"gin-layout/internal/server"
 	"gin-layout/internal/sysuser"
+	"gin-layout/internal/token"
 )
 
 // AdminRouter 注册所有 API 路由。
@@ -21,9 +22,9 @@ type AdminRouter struct {
 	roleH       *role.Handler
 	menuH       *menu.Handler
 	docRegistry *apidoc.Registry
-	tokens      common.TokenManager
-	policy      common.PolicyManager
-	permMap     common.PermissionResolver
+	tokens      token.Manager
+	policy      policy.Manager
+	permMap     policy.PermissionResolver
 	log         *zerolog.Logger
 }
 
@@ -34,9 +35,9 @@ type AdminRouterConfig struct {
 	Role        *role.Handler
 	Menu        *menu.Handler
 	DocRegistry *apidoc.Registry
-	Tokens      common.TokenManager
-	Policy      common.PolicyManager
-	PermMap     common.PermissionResolver
+	Tokens      token.Manager
+	Policy      policy.Manager
+	PermMap     policy.PermissionResolver
 	Log         *zerolog.Logger
 }
 

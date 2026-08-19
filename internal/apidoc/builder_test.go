@@ -184,8 +184,8 @@ func TestBuilder_ProtectedRoute(t *testing.T) {
 
 	// 响应应有真实的数据 schema（非不透明对象）。
 	resp := op.Responses["200"]
-	if resp.SchemaRef == "#/definitions/common.Response" {
-		t.Error("response schema should include concrete data type, not opaque common.Response")
+	if resp.SchemaRef == "#/definitions/web.Response" {
+		t.Error("response schema should include concrete data type, not opaque web.Response")
 	}
 	if !strings.Contains(resp.SchemaRef, "UserRes") {
 		t.Errorf("response schema ref should reference UserRes, got %q", resp.SchemaRef)

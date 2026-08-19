@@ -26,7 +26,7 @@ func (h *Handler) Create(c *gin.Context, req CreateMenuReq) (CreateMenuRes, erro
 func (h *Handler) GetOne(c *gin.Context, _ struct{}) (*domain.MenuItem, error) {
 	id := cast.ToInt64(c.Param("id"))
 	if id == 0 {
-		return nil, domain.ErrInvalidMenuID
+		return nil, ErrInvalidMenuID
 	}
 	return h.svc.GetOne(c.Request.Context(), id)
 }
@@ -34,7 +34,7 @@ func (h *Handler) GetOne(c *gin.Context, _ struct{}) (*domain.MenuItem, error) {
 func (h *Handler) Update(c *gin.Context, req UpdateMenuReq) (UpdateMenuRes, error) {
 	id := cast.ToInt64(c.Param("id"))
 	if id == 0 {
-		return UpdateMenuRes{}, domain.ErrInvalidMenuID
+		return UpdateMenuRes{}, ErrInvalidMenuID
 	}
 	req.MenuID = id
 	return h.svc.Update(c.Request.Context(), req)
@@ -43,7 +43,7 @@ func (h *Handler) Update(c *gin.Context, req UpdateMenuReq) (UpdateMenuRes, erro
 func (h *Handler) Delete(c *gin.Context, _ struct{}) (struct{}, error) {
 	id := cast.ToInt64(c.Param("id"))
 	if id == 0 {
-		return struct{}{}, domain.ErrInvalidMenuID
+		return struct{}{}, ErrInvalidMenuID
 	}
 	return struct{}{}, h.svc.Delete(c.Request.Context(), id)
 }

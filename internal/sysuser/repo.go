@@ -10,6 +10,7 @@ import (
 
 	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
+	"gin-layout/internal/page"
 )
 
 type SysUserModel struct {
@@ -75,7 +76,6 @@ func NewRepository(db *gorm.DB) *SysUserRepository {
 		ToModel:  toUserModel,
 		ToDomain: SysUserModel.toDomain,
 	}
-
 	return &SysUserRepository{
 		db:             db,
 		CRUDRepository: infra.NewCRUDRepository[domain.SysUser, SysUserModel, int64](db, mapper),
@@ -83,7 +83,7 @@ func NewRepository(db *gorm.DB) *SysUserRepository {
 }
 
 type userListQuery struct {
-	domain.PageRequest
+	page.Request
 	Account  *string
 	NickName *string
 	Email    *string

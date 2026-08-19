@@ -1,13 +1,16 @@
 package role
 
-import "time"
+import (
+	"time"
+
+	"gin-layout/internal/page"
+)
 
 type ListRoleReq struct {
-	Page     int     `json:"page" form:"page"`
-	PageSize int     `json:"pageSize" form:"pageSize"`
-	Name     *string `json:"name" form:"name"`
-	Code     *string `json:"code" form:"code"`
-	Enabled  *bool   `json:"enabled" form:"enabled"`
+	page.Request
+	Name    *string `json:"name" form:"name"`
+	Code    *string `json:"code" form:"code"`
+	Enabled *bool   `json:"enabled" form:"enabled"`
 }
 
 type CreateRoleReq struct {

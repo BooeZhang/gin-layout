@@ -1,23 +1,18 @@
-package common
+package web
 
 import (
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"gin-layout/internal/domain"
 )
 
 type Response struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    any    `json:"data"`
-}
-
-type CodedError interface {
-	error
-	ResponseCode() int
-	ResponseHTTPStatus() int
-	ResponseMessage() string
 }
 
 func OK(c *gin.Context, data any) {
@@ -34,7 +29,7 @@ func DecodeError(err error) (httpStatus int, bizCode int, message string) {
 		return http.StatusOK, 0, "success"
 	}
 
-	if codedErr, ok := errors.AsType[CodedError](err); ok {
+	if codedErr, ok := errors.AsType[domain.CodedError](err); ok {
 		return codedErr.ResponseHTTPStatus(), codedErr.ResponseCode(), codedErr.ResponseMessage()
 	}
 

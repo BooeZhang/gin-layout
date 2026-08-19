@@ -3,7 +3,7 @@ package sysuser
 import (
 	"time"
 
-	"gin-layout/internal/common"
+	"gin-layout/internal/page"
 )
 
 type LoginReq struct {
@@ -44,7 +44,7 @@ type CreateUserRes struct {
 }
 
 type ListUserReq struct {
-	common.PageReq
+	page.Request
 	Account  *string `json:"account" form:"account"`
 	NickName *string `json:"nick_name" form:"nick_name"`
 	Email    *string `json:"email" form:"email"`

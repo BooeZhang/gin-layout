@@ -82,7 +82,7 @@ func TestRouteGroup_CloneIsolation(t *testing.T) {
 
 	v1 := routes.Group("/v1").Protected().Tag("v1")
 	users := v1.Group("/users") // inherits v1 defaults
-	v1.Tag("extra")               // should not affect users
+	v1.Tag("extra")             // should not affect users
 
 	_ = users.GET("", Query[struct{}, struct{}](func(c *gin.Context, req struct{}) (struct{}, error) {
 		return struct{}{}, nil

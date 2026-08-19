@@ -19,8 +19,16 @@ type Service struct {
 	permCodeMap map[string]string
 }
 
-func NewService(base common.BaseService, repo Repository) *Service {
-	return &Service{BaseService: base, repo: repo}
+type Deps struct {
+	Base common.BaseService
+	Repo Repository
+}
+
+func NewService(deps Deps) *Service {
+	return &Service{
+		BaseService: deps.Base,
+		repo:        deps.Repo,
+	}
 }
 
 func permissionMapKey(url, method string) string {
@@ -76,7 +84,7 @@ func (s *Service) Create(ctx context.Context, in CreateMenuReq) (res CreateMenuR
 	logger.Debug().Any("input", in).Msg("creating menu")
 
 	if existing, err := s.repo.FindByCode(ctx, *in.Code); err == nil && existing != nil {
-		return res, domain.ErrMenuExists
+		return res, ErrMenuExists
 	}
 
 	m := &domain.Menu{}

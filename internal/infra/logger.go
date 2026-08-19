@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"gin-layout/config"
-	"gin-layout/internal/domain"
+	"gin-layout/internal/reqctx"
 )
 
 type Logger = zerolog.Logger
@@ -46,11 +46,11 @@ func LogFromContext(ctx context.Context, base *Logger) zerolog.Logger {
 	}
 
 	logCtx := logger.With()
-	if requestID, ok := domain.RequestIDFromContext(ctx); ok {
-		logCtx = logCtx.Str(domain.RequestIDKey, requestID)
+	if requestID, ok := reqctx.RequestIDFromContext(ctx); ok {
+		logCtx = logCtx.Str(reqctx.RequestIDKey, requestID)
 	}
-	if user, ok := domain.CurrentUserFromContext(ctx); ok {
-		logCtx = logCtx.Int64(domain.UserIDKey, user.UserID).Str(domain.UserKey, user.Account)
+	if user, ok := reqctx.CurrentUserFromContext(ctx); ok {
+		logCtx = logCtx.Int64(reqctx.UserIDKey, user.UserID).Str(reqctx.UserKey, user.Account)
 	}
 
 	return logCtx.Logger()

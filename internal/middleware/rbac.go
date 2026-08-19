@@ -4,23 +4,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 
-	"gin-layout/internal/common"
-	"gin-layout/internal/domain"
+	"gin-layout/internal/policy"
+	"gin-layout/internal/reqctx"
+	"gin-layout/internal/token"
 )
 
-func RBAC(enforcer common.PolicyManager, permissions common.PermissionResolver, logger *zerolog.Logger) gin.HandlerFunc {
+func RBAC(enforcer policy.Manager, permissions policy.PermissionResolver, logger *zerolog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if enforcer == nil {
-			c.Error(domain.ErrNotLogin)
+			_ = c.Error(token.ErrNotLogin)
 			return
 		}
 
-		userAccount, ok := domain.CurrentUserFromContext(c.Request.Context())
+		userAccount, ok := reqctx.CurrentUserFromContext(c.Request.Context())
 		if !ok {
-			c.Error(domain.ErrNotLogin)
+			_ = c.Error(token.ErrNotLogin)
 			return
 		}
-		requestID, _ := domain.RequestIDFromContext(c.Request.Context())
+		requestID, _ := reqctx.RequestIDFromContext(c.Request.Context())
 
 		permissionCode, ok := "", false
 		if permissions != nil {
@@ -42,12 +43,12 @@ func RBAC(enforcer common.PolicyManager, permissions common.PermissionResolver, 
 				Str("method", c.Request.Method).
 				Str("permissionCode", permissionCode).
 				Msg("enforcer.Enforce failed")
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 
 		if !pass {
-			c.Error(domain.ErrNotPermission)
+			_ = c.Error(policy.ErrNotPermission)
 			return
 		}
 

@@ -9,6 +9,8 @@ import (
 
 	"gin-layout/internal/common"
 	"gin-layout/internal/domain"
+	"gin-layout/internal/page"
+	"gin-layout/internal/policy"
 )
 
 type Service struct {
@@ -17,20 +19,34 @@ type Service struct {
 	repo      Repository
 	userQuery UserFinder
 	menus     MenuService
-	policies  common.PolicyManager
+	policies  policy.Manager
 }
 
-func NewService(base common.BaseService, repo Repository, userQuery UserFinder, menus MenuService, policies common.PolicyManager) *Service {
-	return &Service{BaseService: base, repo: repo, userQuery: userQuery, menus: menus, policies: policies}
+type Deps struct {
+	Base   common.BaseService
+	Repo   Repository
+	Users  UserFinder
+	Menus  MenuService
+	Policy policy.Manager
 }
 
-func (s *Service) List(ctx context.Context, in ListRoleReq) (res domain.PageResult[RoleItem], err error) {
+func NewService(deps Deps) *Service {
+	return &Service{
+		BaseService: deps.Base,
+		repo:        deps.Repo,
+		userQuery:   deps.Users,
+		menus:       deps.Menus,
+		policies:    deps.Policy,
+	}
+}
+
+func (s *Service) List(ctx context.Context, in ListRoleReq) (res page.Result[RoleItem], err error) {
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("role list")
 
 	q := roleListQuery{
-		PageRequest: domain.PageRequest{Page: in.Page, PageSize: in.PageSize},
-		Name:        in.Name, Code: in.Code, Enabled: in.Enabled,
+		Request: in.Request,
+		Name:    in.Name, Code: in.Code, Enabled: in.Enabled,
 	}
 	result, total, err := s.repo.List(ctx, q)
 	if err != nil {
@@ -44,7 +60,7 @@ func (s *Service) List(ctx context.Context, in ListRoleReq) (res domain.PageResu
 			Enabled: item.Enabled, CreatedAt: item.CreatedAt,
 		}
 	})
-	return domain.NewPageResult(items, total, in.Page, in.PageSize), nil
+	return page.NewResult(items, total, q.Request.Page, q.Request.PageSize), nil
 }
 
 func (s *Service) Create(ctx context.Context, in CreateRoleReq) (res CreateRoleRes, err error) {
@@ -56,7 +72,7 @@ func (s *Service) Create(ctx context.Context, in CreateRoleReq) (res CreateRoleR
 		return res, err
 	}
 	if !errors.Is(err, domain.ErrNotFound) {
-		return res, domain.ErrRoleExists
+		return res, ErrRoleExists
 	}
 
 	role := &domain.Role{
@@ -154,7 +170,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	}
 
 	if s.IsAdminRole(role.Code) {
-		return domain.ErrCannotDeleteAdminRole
+		return ErrCannotDeleteAdminRole
 	}
 
 	if err := s.repo.DeleteWithRoleID(ctx, id); err != nil {

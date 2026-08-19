@@ -1,9 +1,6 @@
-package domain
+package reqctx
 
-import (
-	"context"
-	"time"
-)
+import "context"
 
 type CurrentUser struct {
 	UserID  int64
@@ -47,21 +44,4 @@ func WithRequestID(ctx context.Context, requestID string) context.Context {
 func RequestIDFromContext(ctx context.Context) (string, bool) {
 	r, ok := ctx.Value(CtxRequestID).(string)
 	return r, ok
-}
-
-const (
-	TokenTypeAccess  = "access"
-	TokenTypeRefresh = "refresh"
-)
-
-type TokenPair struct {
-	AccessToken  string
-	RefreshToken string
-}
-
-type TokenClaims struct {
-	UserID    int64
-	Subject   string
-	Type      string
-	ExpiresAt time.Time
 }

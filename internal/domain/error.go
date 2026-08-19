@@ -28,3 +28,10 @@ func (e *DomainError) Is(target error) bool {
 func NewDomainError(code int, httpStatus int, message string) *DomainError {
 	return &DomainError{Code: code, HTTPStatus: httpStatus, Message: message}
 }
+
+type CodedError interface {
+	error
+	ResponseCode() int
+	ResponseHTTPStatus() int
+	ResponseMessage() string
+}

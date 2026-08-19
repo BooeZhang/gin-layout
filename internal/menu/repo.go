@@ -73,6 +73,8 @@ func (m MenuModel) toDomain() domain.Menu {
 		Method:     m.Method,
 		APIPath:    m.APIPath,
 		PermCode:   m.PermCode,
+		CreatedAt:  m.CreatedAt.Unix(),
+		UpdatedAt:  m.UpdatedAt.Unix(),
 	}
 }
 
@@ -117,7 +119,6 @@ func NewRepository(db *gorm.DB) *MenuRepository {
 		ToModel:  toMenuModel,
 		ToDomain: MenuModel.toDomain,
 	}
-
 	return &MenuRepository{
 		db:             db,
 		CRUDRepository: infra.NewCRUDRepository[domain.Menu, MenuModel, int64](db, mapper),

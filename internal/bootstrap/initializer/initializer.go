@@ -12,10 +12,10 @@ import (
 	"github.com/samber/lo"
 
 	"gin-layout/config"
-	"gin-layout/internal/common"
 	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
 	"gin-layout/internal/menu"
+	"gin-layout/internal/policy"
 	"gin-layout/internal/role"
 	"gin-layout/internal/sysuser"
 )
@@ -54,25 +54,27 @@ type Initializer struct {
 	userRepo *sysuser.SysUserRepository
 	roleRepo *role.RoleRepository
 	menuRepo *menu.MenuRepository
-	policies common.PolicyManager
+	policies policy.Manager
 	logger   *infra.Logger
 }
 
-func NewInitializer(
-	cfg *config.Config,
-	userRepo *sysuser.SysUserRepository,
-	roleRepo *role.RoleRepository,
-	menuRepo *menu.MenuRepository,
-	policies common.PolicyManager,
-	logger *infra.Logger,
-) *Initializer {
+type Deps struct {
+	Cfg      *config.Config
+	Users    *sysuser.SysUserRepository
+	Roles    *role.RoleRepository
+	Menus    *menu.MenuRepository
+	Policies policy.Manager
+	Logger   *infra.Logger
+}
+
+func NewInitializer(deps Deps) *Initializer {
 	return &Initializer{
-		cfg:      cfg,
-		userRepo: userRepo,
-		roleRepo: roleRepo,
-		menuRepo: menuRepo,
-		policies: policies,
-		logger:   logger,
+		cfg:      deps.Cfg,
+		userRepo: deps.Users,
+		roleRepo: deps.Roles,
+		menuRepo: deps.Menus,
+		policies: deps.Policies,
+		logger:   deps.Logger,
 	}
 }
 
