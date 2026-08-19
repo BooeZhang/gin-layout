@@ -11,23 +11,27 @@ func Auth(tokens common.TokenManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rawToken, err := common.ParseBearer(c.GetHeader("Authorization"))
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 
 		claims, err := tokens.Parse(rawToken)
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
+			return
+		}
+		if claims.Type != domain.TokenTypeAccess {
+			_ = c.Error(domain.ErrInvalidAccessToken)
 			return
 		}
 
 		revoked, err := tokens.IsRevoked(c.Request.Context(), rawToken)
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		if revoked {
-			c.Error(domain.ErrTokenRevoked)
+			_ = c.Error(domain.ErrTokenRevoked)
 			return
 		}
 

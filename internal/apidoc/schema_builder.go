@@ -7,8 +7,7 @@ import (
 	"time"
 )
 
-// fullPkgPathRe matches full Go package paths (containing at least one "/")
-// followed by a dot — e.g. "gin-layout/internal/user." in generic type names.
+// fullPkgPathRe 匹配完整的Go包路径
 var fullPkgPathRe = regexp.MustCompile(`[\w.*-]+(?:/[\w.-]+)+\.`)
 
 // 通过反射从 Go 类型构建 SchemaModel 定义。
@@ -26,7 +25,7 @@ func typeSchemaName(t reflect.Type) string {
 	if t == nil {
 		return ""
 	}
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
@@ -44,7 +43,7 @@ func typeSchemaName(t reflect.Type) string {
 }
 
 // 缩短泛型类型参数中出现的完整 Go 模块路径。
-// 例如 "PageResult[gin-layout/internal/user.UserItem]" → "PageResult[internal.user.UserItem]"
+// 例如 "PageResult[gin-layout/internal/sysuser.UserItem]" → "PageResult[internal.user.UserItem]"
 func shortenGenericTypeArgs(name string) string {
 	if !strings.ContainsRune(name, '[') {
 		return name
@@ -71,7 +70,7 @@ func (b *schemaBuilder) addDefinition(t reflect.Type) string {
 		return ""
 	}
 
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
@@ -79,7 +78,7 @@ func (b *schemaBuilder) addDefinition(t reflect.Type) string {
 	switch {
 	case isBasicKind(kind):
 		return ""
-	case t == reflect.TypeOf(time.Time{}):
+	case t == reflect.TypeFor[time.Time]():
 		return ""
 	case kind == reflect.Slice || kind == reflect.Array:
 		elem := t.Elem()
@@ -107,8 +106,7 @@ func (b *schemaBuilder) addDefinition(t reflect.Type) string {
 	}
 	b.defs[name] = schema // 循环引用的占位符
 
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
+	for f := range t.Fields() {
 		if !f.IsExported() {
 			continue
 		}
@@ -141,13 +139,13 @@ func (b *schemaBuilder) addDefinition(t reflect.Type) string {
 // 将嵌入结构体字段合并到父定义中。
 func (b *schemaBuilder) flattenEmbeddedField(parentName string, f reflect.StructField) {
 	t := f.Type
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
 		return
 	}
-	if t == reflect.TypeOf(time.Time{}) {
+	if t == reflect.TypeFor[time.Time]() {
 		return
 	}
 
@@ -159,8 +157,7 @@ func (b *schemaBuilder) flattenEmbeddedField(parentName string, f reflect.Struct
 	}
 
 	parent := b.defs[parentName]
-	for i := 0; i < t.NumField(); i++ {
-		ef := t.Field(i)
+	for ef := range t.Fields() {
 		if !ef.IsExported() {
 			continue
 		}
@@ -187,11 +184,11 @@ func (b *schemaBuilder) flattenEmbeddedField(parentName string, f reflect.Struct
 // 将结构体字段映射为 SchemaModel。
 func (b *schemaBuilder) fieldToSchema(f reflect.StructField) SchemaModel {
 	t := f.Type
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
-	if t == reflect.TypeOf(time.Time{}) {
+	if t == reflect.TypeFor[time.Time]() {
 		return SchemaModel{Type: "string", Format: "date-time"}
 	}
 
@@ -283,7 +280,7 @@ func basicTypeName(t reflect.Type) string {
 
 // 如果类型是零字段的结构体则返回 true。
 func isEmptyStructType(t reflect.Type) bool {
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	return t.Kind() == reflect.Struct && t.NumField() == 0

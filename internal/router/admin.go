@@ -5,21 +5,19 @@ import (
 	"github.com/rs/zerolog"
 
 	"gin-layout/internal/apidoc"
-	"gin-layout/internal/auth"
 	"gin-layout/internal/common"
 	"gin-layout/internal/health"
 	"gin-layout/internal/menu"
 	mw "gin-layout/internal/middleware"
 	"gin-layout/internal/role"
 	"gin-layout/internal/server"
-	"gin-layout/internal/user"
+	"gin-layout/internal/sysuser"
 )
 
 // AdminRouter 注册所有 API 路由。
 type AdminRouter struct {
-	authH       *auth.Handler
 	healthH     *health.Handler
-	userH       *user.Handler
+	userH       *sysuser.Handler
 	roleH       *role.Handler
 	menuH       *menu.Handler
 	docRegistry *apidoc.Registry
@@ -31,9 +29,8 @@ type AdminRouter struct {
 
 // AdminRouterConfig 保存 AdminRouter 的依赖项
 type AdminRouterConfig struct {
-	Auth        *auth.Handler
 	Health      *health.Handler
-	User        *user.Handler
+	User        *sysuser.Handler
 	Role        *role.Handler
 	Menu        *menu.Handler
 	DocRegistry *apidoc.Registry
@@ -46,7 +43,6 @@ type AdminRouterConfig struct {
 // NewAdminRouter 创建一个新的 AdminRouter 对象
 func NewAdminRouter(cfg AdminRouterConfig) *AdminRouter {
 	return &AdminRouter{
-		authH:       cfg.Auth,
 		healthH:     cfg.Health,
 		userH:       cfg.User,
 		roleH:       cfg.Role,
@@ -59,7 +55,7 @@ func NewAdminRouter(cfg AdminRouterConfig) *AdminRouter {
 	}
 }
 
-// Register implements server.Router.
+// Register 实现 server.Router
 func (r *AdminRouter) Register(engine *gin.Engine) {
 	authMW := mw.Auth(r.tokens)
 	rbacMW := mw.RBAC(r.policy, r.permMap, r.log)
@@ -70,9 +66,9 @@ func (r *AdminRouter) Register(engine *gin.Engine) {
 	api := routes.Group("/api")
 
 	auth := api.Group("/auth").Public().Tag("认证")
-	auth.POST("/login", server.JSON(r.authH.Login)).Summary("登录")
-	auth.POST("/refresh-token", server.JSON(r.authH.RefreshToken)).Summary("刷新令牌")
-	auth.POST("/logout", server.JSON(r.authH.Logout), authMW).Summary("登出").Protected()
+	auth.POST("/login", server.JSON(r.userH.Login)).Summary("登录")
+	auth.POST("/refresh-token", server.JSON(r.userH.RefreshToken)).Summary("刷新令牌")
+	auth.POST("/logout", server.JSON(r.userH.Logout), authMW).Summary("登出").Protected()
 
 	v1 := api.Group("/v1", authMW, rbacMW).Protected()
 

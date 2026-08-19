@@ -73,7 +73,7 @@ func (p *Publisher) Register(engine *gin.Engine) {
 func (p *Publisher) handleJSON(c *gin.Context) {
 	data, err := p.buildSpec()
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	c.Data(http.StatusOK, "application/json; charset=utf-8", data)

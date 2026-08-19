@@ -13,13 +13,13 @@ type CurrentUser struct {
 type contextKey string
 
 const (
-	CtxUserKey    contextKey = "currentUser"
-	CtxTokenKey   contextKey = "currentToken"
-	CtxRequestID  contextKey = "requestID"
-	RequestIDKey             = "requestID"
-	UserIDKey                = "userID"
-	UserKey                  = "user"
-	RequestIDHeader          = "X-Request-ID"
+	CtxUserKey      contextKey = "currentUser"
+	CtxTokenKey     contextKey = "currentToken"
+	CtxRequestID    contextKey = "requestID"
+	RequestIDKey               = "requestID"
+	UserIDKey                  = "userID"
+	UserKey                    = "user"
+	RequestIDHeader            = "X-Request-ID"
 )
 
 func WithCurrentUser(ctx context.Context, user CurrentUser) context.Context {
@@ -49,14 +49,19 @@ func RequestIDFromContext(ctx context.Context) (string, bool) {
 	return r, ok
 }
 
+const (
+	TokenTypeAccess  = "access"
+	TokenTypeRefresh = "refresh"
+)
+
 type TokenPair struct {
 	AccessToken  string
 	RefreshToken string
 }
 
 type TokenClaims struct {
-	UserID  int64
-	Subject string
+	UserID    int64
+	Subject   string
+	Type      string
 	ExpiresAt time.Time
 }
-

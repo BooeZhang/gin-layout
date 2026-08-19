@@ -1,8 +1,3 @@
-// Package apidoc 提供一次构建多次服务的 API 文档子系统。
-// 在路由注册期间，端点及其文档元数据被收集到 Registry 中。
-// 启动时，Builder 合并组默认值与路由覆盖，执行 schema 反射，
-// 并生成内部的 SpecModel。渲染器将模型转换为 Swagger 2.0 JSON，
-// Publisher 在运行时提供不可变的字节数据。
 package apidoc
 
 import "reflect"

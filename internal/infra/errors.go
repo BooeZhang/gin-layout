@@ -16,5 +16,6 @@ func NormalizeError(err error) error {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return domain.ErrNotFound
 	}
+
 	return err
 }

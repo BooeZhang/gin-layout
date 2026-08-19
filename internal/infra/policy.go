@@ -41,7 +41,10 @@ func NewCasbinManager(db *gorm.DB, roles roleCodeFinder, modelPath string, logge
 		logger:    logger,
 	}
 
-	c.enforcer.LoadPolicy()
+	if err := c.enforcer.LoadPolicy(); err != nil {
+		return nil, fmt.Errorf("load casbin enforcer: %w", err)
+	}
+
 	return c, nil
 }
 

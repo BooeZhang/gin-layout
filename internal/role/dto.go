@@ -3,11 +3,11 @@ package role
 import "time"
 
 type ListRoleReq struct {
-	Page    int     `json:"page" form:"page"`
-	PageSize int    `json:"pageSize" form:"pageSize"`
-	Name    *string `json:"name" form:"name"`
-	Code    *string `json:"code" form:"code"`
-	Enabled *bool   `json:"enabled" form:"enabled"`
+	Page     int     `json:"page" form:"page"`
+	PageSize int     `json:"pageSize" form:"pageSize"`
+	Name     *string `json:"name" form:"name"`
+	Code     *string `json:"code" form:"code"`
+	Enabled  *bool   `json:"enabled" form:"enabled"`
 }
 
 type CreateRoleReq struct {
@@ -43,11 +43,11 @@ type RoleItem struct {
 	ID            int64     `json:"id"`
 	Name          string    `json:"name"`
 	Code          string    `json:"code"`
-	Description   string    `json:"description,omitempty"`
-	Sort          int       `json:"sort,omitempty"`
+	Description   string    `json:"description,omitzero"`
+	Sort          int       `json:"sort,omitzero"`
 	CreatedAt     time.Time `json:"createdAt"`
-	Enabled       bool      `json:"enabled,omitempty"`
-	PermissionIDs []int64   `json:"permissionIDs,omitempty"`
+	Enabled       bool      `json:"enabled,omitzero"`
+	PermissionIDs []int64   `json:"permissionIDs,omitzero"`
 }
 
 type UserAddReq struct {

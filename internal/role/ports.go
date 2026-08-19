@@ -15,7 +15,7 @@ type Repository interface {
 	FindByIDs(ctx context.Context, ids []int64) ([]domain.Role, error)
 	CreateWithMenu(ctx context.Context, role *domain.Role, menuIDs []int64) error
 	UpdateWithMenu(ctx context.Context, role *domain.Role, menuIDs []int64) error
-	DeleteWithRelat(ctx context.Context, roleID int64) error
+	DeleteWithRoleID(ctx context.Context, roleID int64) error
 	FindByCode(ctx context.Context, code string) (*domain.Role, error)
 	FindCodesByIDs(ctx context.Context, roleIDs []int64) ([]string, error)
 	FindByUserIDs(ctx context.Context, userIDs []int64, enabled *bool) ([]domain.Role, error)
@@ -27,7 +27,7 @@ type Repository interface {
 }
 
 type UserFinder interface {
-	FindByIDs(ctx context.Context, ids []int64) ([]domain.User, error)
+	FindByIDs(ctx context.Context, ids []int64) ([]domain.SysUser, error)
 }
 
 type MenuService interface {

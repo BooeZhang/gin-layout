@@ -76,7 +76,7 @@ func (m MenuModel) toDomain() domain.Menu {
 	}
 }
 
-func toMenuModel(m domain.Menu) MenuModel {
+func toMenuModel(m *domain.Menu) MenuModel {
 	return MenuModel{
 		ID:         m.ID,
 		ParentID:   m.ParentID,
@@ -107,55 +107,24 @@ func toMenuModel(m domain.Menu) MenuModel {
 	}
 }
 
-type PGRepository struct {
-	crud *infra.CRUDRepository[MenuModel, int64]
-	db   *gorm.DB
+type MenuRepository struct {
+	*infra.CRUDRepository[domain.Menu, MenuModel, int64]
+	db *gorm.DB
 }
 
-func NewRepository(db *gorm.DB) *PGRepository {
-	return &PGRepository{
-		db:   db,
-		crud: infra.NewCRUDRepository[MenuModel, int64](db),
+func NewRepository(db *gorm.DB) *MenuRepository {
+	mapper := infra.Mapper[domain.Menu, MenuModel]{
+		ToModel:  toMenuModel,
+		ToDomain: MenuModel.toDomain,
+	}
+
+	return &MenuRepository{
+		db:             db,
+		CRUDRepository: infra.NewCRUDRepository[domain.Menu, MenuModel, int64](db, mapper),
 	}
 }
 
-func (r *PGRepository) Create(ctx context.Context, m *domain.Menu) error {
-	model := toMenuModel(*m)
-	if err := r.crud.Create(ctx, &model); err != nil {
-		return err
-	}
-	m.ID = model.ID
-	return nil
-}
-
-func (r *PGRepository) Update(ctx context.Context, m *domain.Menu) error {
-	model := toMenuModel(*m)
-	return r.crud.Update(ctx, &model)
-}
-
-func (r *PGRepository) Delete(ctx context.Context, id int64) error {
-	return r.crud.Delete(ctx, id)
-}
-
-func (r *PGRepository) FindByID(ctx context.Context, id int64) (*domain.Menu, error) {
-	model, err := r.crud.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	m := model.toDomain()
-	return &m, nil
-}
-
-func (r *PGRepository) FindByIDs(ctx context.Context, ids []int64) ([]domain.Menu, error) {
-	models, err := r.crud.FindByIDs(ctx, ids)
-	if err != nil {
-		return nil, err
-	}
-	menus := lo.Map(models, func(m MenuModel, _ int) domain.Menu { return m.toDomain() })
-	return menus, nil
-}
-
-func (r *PGRepository) ListAll(ctx context.Context) ([]domain.Menu, error) {
+func (r *MenuRepository) ListAll(ctx context.Context) ([]domain.Menu, error) {
 	models, err := gorm.G[MenuModel](r.db).Order("sort asc, id asc").Find(ctx)
 	if err != nil {
 		return nil, infra.NormalizeError(err)
@@ -164,7 +133,7 @@ func (r *PGRepository) ListAll(ctx context.Context) ([]domain.Menu, error) {
 	return menus, nil
 }
 
-func (r *PGRepository) FindByCode(ctx context.Context, code string) (*domain.Menu, error) {
+func (r *MenuRepository) FindByCode(ctx context.Context, code string) (*domain.Menu, error) {
 	m, err := gorm.G[MenuModel](r.db).Where("code = ?", code).First(ctx)
 	if err != nil {
 		return nil, infra.NormalizeError(err)
@@ -173,7 +142,7 @@ func (r *PGRepository) FindByCode(ctx context.Context, code string) (*domain.Men
 	return &menu, nil
 }
 
-func (r *PGRepository) FindMenusByRoleIDs(ctx context.Context, roleIDs []int64, enabled *bool) ([]domain.Menu, error) {
+func (r *MenuRepository) FindMenusByRoleIDs(ctx context.Context, roleIDs []int64, enabled *bool) ([]domain.Menu, error) {
 	if len(roleIDs) == 0 {
 		return nil, nil
 	}
@@ -197,14 +166,14 @@ func (r *PGRepository) FindMenusByRoleIDs(ctx context.Context, roleIDs []int64, 
 	return menus, nil
 }
 
-func (r *PGRepository) CreateAll(ctx context.Context, menus []domain.Menu) error {
+func (r *MenuRepository) CreateAll(ctx context.Context, menus []domain.Menu) error {
 	if len(menus) == 0 {
 		return nil
 	}
-	models := lo.Map(menus, func(m domain.Menu, _ int) MenuModel { return toMenuModel(m) })
+	models := lo.Map(menus, func(m domain.Menu, _ int) MenuModel { return toMenuModel(&m) })
 	err := r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "perm_code"}},
+			Columns: []clause.Column{{Name: "perm_code"}},
 			DoUpdates: clause.AssignmentColumns([]string{
 				"parent_id", "name", "type", "path", "redirect", "component",
 				"icon", "active_menu", "link", "query", "remark", "sort", "level",

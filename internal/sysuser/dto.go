@@ -1,4 +1,4 @@
-package user
+package sysuser
 
 import (
 	"time"
@@ -6,11 +6,35 @@ import (
 	"gin-layout/internal/common"
 )
 
+type LoginReq struct {
+	Account  string `json:"account" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginRes struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+type (
+	LogoutReq struct{}
+	LogoutRes struct{}
+)
+
+type RefreshTokenReq struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type RefreshTokenRes struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 type CreateUserReq struct {
 	Account  string  `json:"account" binding:"required,account"`
 	Password string  `json:"password" binding:"required,password"`
 	NickName string  `json:"nick_name"`
-	Email    string  `json:"email" binding:"omitempty,email"`
+	Email    string  `json:"email" binding:"omitzero,email"`
 	Phone    string  `json:"phone"`
 	RoleIDs  []int64 `json:"roleIds"`
 }
@@ -39,7 +63,7 @@ type UserItem struct {
 	LastLoginAt *time.Time `json:"last_login_at"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
-	Roles       []RoleItem `json:"roles,omitempty"`
+	Roles       []RoleItem `json:"roles,omitzero"`
 }
 
 type RoleItem struct {
@@ -51,12 +75,12 @@ type RoleItem struct {
 type UpdateUserReq struct {
 	UserID   int64   `json:"_"`
 	NickName *string `json:"nick_name"`
-	Password *string `json:"password" binding:"omitempty,password"`
+	Password *string `json:"password" binding:"omitzero,password"`
 	Email    *string `json:"email"`
 	Phone    *string `json:"phone"`
 	Avatar   *string `json:"avatar"`
 	Enabled  *bool   `json:"enabled"`
-	RoleIDs  []int64 `json:"roleIds,omitempty"`
+	RoleIDs  []int64 `json:"roleIds,omitzero"`
 }
 
 type UpdateUserRes struct{}

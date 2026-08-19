@@ -11,16 +11,17 @@ import (
 )
 
 type BaseService struct {
-	Logger *zerolog.Logger
-	Cfg    *config.Config
+	Logger       *zerolog.Logger
+	Cfg          *config.Config
+	TokenManager TokenManager
 }
 
-func NewBaseService(cfg *config.Config, logger *zerolog.Logger) BaseService {
+func NewBaseService(cfg *config.Config, logger *zerolog.Logger, token TokenManager) BaseService {
 	if logger == nil {
 		l := zerolog.New(os.Stdout).With().Timestamp().Logger()
 		logger = &l
 	}
-	return BaseService{Logger: logger, Cfg: cfg}
+	return BaseService{Logger: logger, Cfg: cfg, TokenManager: token}
 }
 
 func (s BaseService) Log(ctx context.Context) zerolog.Logger {

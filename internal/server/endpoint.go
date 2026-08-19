@@ -19,12 +19,12 @@ func WrapJSON[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req Req
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		res, err := h(c, req)
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		common.OK(c, res)
@@ -36,12 +36,12 @@ func WrapQuery[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req Req
 		if err := c.ShouldBindQuery(&req); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		res, err := h(c, req)
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		common.OK(c, res)
@@ -53,12 +53,12 @@ func WrapForm[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req Req
 		if err := c.ShouldBind(&req); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		res, err := h(c, req)
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		common.OK(c, res)
@@ -79,12 +79,12 @@ func WrapAuto[Req, Res any](h TypedHandler[Req, Res]) gin.HandlerFunc {
 			err = c.ShouldBindJSON(&req)
 		}
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		res, err := h(c, req)
 		if err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		common.OK(c, res)

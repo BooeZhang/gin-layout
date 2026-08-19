@@ -19,14 +19,14 @@ type TokenBlacklistModel struct {
 func (TokenBlacklistModel) TableName() string { return "token_black_lists" }
 
 type TokenBlacklistRepository struct {
-	crud *CRUDRepository[TokenBlacklistModel, int64]
+	crud *CRUDRepository[TokenBlacklistModel, TokenBlacklistModel, int64]
 	db   *gorm.DB
 }
 
 func NewTokenBlacklistRepository(db *gorm.DB) *TokenBlacklistRepository {
 	return &TokenBlacklistRepository{
 		db:   db,
-		crud: NewCRUDRepository[TokenBlacklistModel, int64](db),
+		crud: NewModelCRUDRepository[TokenBlacklistModel, int64](db),
 	}
 }
 
@@ -46,7 +46,7 @@ func (r *TokenBlacklistRepository) Add(ctx context.Context, tokenHash string, us
 	})
 }
 
-// DeleteExpired removes all expired blacklist entries (expires_at < now).
+// DeleteExpired 删除所有过期的黑名单项
 func (r *TokenBlacklistRepository) DeleteExpired(ctx context.Context) error {
 	_, err := gorm.G[TokenBlacklistModel](r.db).
 		Where("expires_at < CURRENT_TIMESTAMP").

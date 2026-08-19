@@ -6,39 +6,69 @@ import (
 	"gorm.io/gorm"
 )
 
-type CRUDRepository[T any, ID comparable] struct {
-	db *gorm.DB
+// Mapper 领域对象 D 与持久化模型 M 之间的双向转换
+type Mapper[D, M any] struct {
+	ToModel  func(*D) M
+	ToDomain func(M) D
 }
 
-func NewCRUDRepository[T any, ID comparable](db *gorm.DB) *CRUDRepository[T, ID] {
-	return &CRUDRepository[T, ID]{db: db}
+// CRUDRepository 基于 Mapper 的通用 CRUD,入参/出参均为领域对象 D
+type CRUDRepository[D, M any, ID comparable] struct {
+	db     *gorm.DB
+	mapper Mapper[D, M]
 }
 
-func (r *CRUDRepository[T, ID]) Create(ctx context.Context, entity *T) error {
-	return NormalizeError(gorm.G[T](r.db).Create(ctx, entity))
+func NewCRUDRepository[D, M any, ID comparable](db *gorm.DB, mapper Mapper[D, M]) *CRUDRepository[D, M, ID] {
+	return &CRUDRepository[D, M, ID]{db: db, mapper: mapper}
 }
 
-func (r *CRUDRepository[T, ID]) Update(ctx context.Context, entity *T) error {
-	return NormalizeError(r.db.WithContext(ctx).Save(entity).Error)
+// NewModelCRUDRepository 模型即领域对象时(无需转换)的便捷构造
+func NewModelCRUDRepository[M any, ID comparable](db *gorm.DB) *CRUDRepository[M, M, ID] {
+	return NewCRUDRepository[M, M, ID](db, Mapper[M, M]{
+		ToModel:  func(m *M) M { return *m },
+		ToDomain: func(m M) M { return m },
+	})
 }
 
-func (r *CRUDRepository[T, ID]) Delete(ctx context.Context, id ID) error {
-	_, err := gorm.G[T](r.db).Where("id = ?", id).Delete(ctx)
+func (r *CRUDRepository[D, M, ID]) Create(ctx context.Context, entity *D) error {
+	m := r.mapper.ToModel(entity)
+	if err := gorm.G[M](r.db).Create(ctx, &m); err != nil {
+		return NormalizeError(err)
+	}
+	*entity = r.mapper.ToDomain(m) // 回填自增 ID、时间戳等
+	return nil
+}
+
+func (r *CRUDRepository[D, M, ID]) Update(ctx context.Context, entity *D) error {
+	m := r.mapper.ToModel(entity)
+	return NormalizeError(r.db.WithContext(ctx).Save(&m).Error)
+}
+
+func (r *CRUDRepository[D, M, ID]) Delete(ctx context.Context, id ID) error {
+	_, err := gorm.G[M](r.db).Where("id = ?", id).Delete(ctx)
 	if err != nil {
 		return NormalizeError(err)
 	}
 	return nil
 }
 
-func (r *CRUDRepository[T, ID]) FindByID(ctx context.Context, id ID) (*T, error) {
-	entity, err := gorm.G[T](r.db).Where("id = ?", id).First(ctx)
+func (r *CRUDRepository[D, M, ID]) FindByID(ctx context.Context, id ID) (*D, error) {
+	m, err := gorm.G[M](r.db).Where("id = ?", id).First(ctx)
 	if err != nil {
 		return nil, NormalizeError(err)
 	}
-	return &entity, nil
+	d := r.mapper.ToDomain(m)
+	return &d, nil
 }
 
-func (r *CRUDRepository[T, ID]) FindByIDs(ctx context.Context, ids []ID) ([]T, error) {
-	roles, err := gorm.G[T](r.db).Where("id in (?)", ids).Find(ctx)
-	return roles, NormalizeError(err)
+func (r *CRUDRepository[D, M, ID]) FindByIDs(ctx context.Context, ids []ID) ([]D, error) {
+	ms, err := gorm.G[M](r.db).Where("id in (?)", ids).Find(ctx)
+	if err != nil {
+		return nil, NormalizeError(err)
+	}
+	ds := make([]D, 0, len(ms))
+	for _, m := range ms {
+		ds = append(ds, r.mapper.ToDomain(m))
+	}
+	return ds, nil
 }

@@ -7,14 +7,6 @@ import (
 	"gin-layout/internal/domain"
 )
 
-type CRUDRepository[T any, ID comparable] interface {
-	Create(ctx context.Context, entity *T) error
-	Update(ctx context.Context, entity *T) error
-	Delete(ctx context.Context, id ID) error
-	FindByID(ctx context.Context, id ID) (*T, error)
-	FindByIDs(ctx context.Context, ids []ID) ([]T, error)
-}
-
 type TokenIssuer interface {
 	Issue(userID int64, subject string) (domain.TokenPair, error)
 	Parse(raw string) (*domain.TokenClaims, error)
@@ -26,16 +18,10 @@ type TokenBlacklistRepository interface {
 }
 
 type TokenManager interface {
-	Issue(userID int64, subject string) (domain.TokenPair, error)
-	Parse(raw string) (*domain.TokenClaims, error)
+	TokenIssuer
 	IsRevoked(ctx context.Context, raw string) (bool, error)
 	Revoke(ctx context.Context, raw string, userID int64, expiresAt time.Time) error
 	RevokeCurrent(ctx context.Context) (bool, error)
-}
-
-type PasswordHasher interface {
-	Hash(plain string) (string, error)
-	Compare(hash, plain string) bool
 }
 
 type PolicyManager interface {

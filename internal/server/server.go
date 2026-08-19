@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -47,8 +48,12 @@ func NewServer(cfg Config, logger *infra.Logger, routers ...Router) *Server {
 	return &Server{
 		engine: engine,
 		server: &http.Server{
-			Addr:    fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-			Handler: engine,
+			Addr:              fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+			Handler:           engine,
+			ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:       10 * time.Second,
+			WriteTimeout:      30 * time.Second,
+			IdleTimeout:       120 * time.Second,
 		},
 		logger: logger,
 	}

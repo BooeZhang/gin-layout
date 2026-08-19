@@ -1,9 +1,10 @@
-package user
+package sysuser
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/samber/lo"
 
@@ -14,22 +15,92 @@ import (
 type Service struct {
 	common.BaseService
 
-	userRepo Repository
-	policy   common.PolicyManager
-	password common.PasswordHasher
-	roles    RoleFinder
-	menus    MenuFinder
+	sysUserRepo Repository
+	policy      common.PolicyManager
+	roles       RoleFinder
+	menus       MenuFinder
 }
 
-func NewService(base common.BaseService, users Repository, policy common.PolicyManager, password common.PasswordHasher, roles RoleFinder, menus MenuFinder) *Service {
+func NewService(base common.BaseService, users Repository, policy common.PolicyManager, roles RoleFinder, menus MenuFinder) *Service {
 	return &Service{
 		BaseService: base,
-		userRepo:    users,
+		sysUserRepo: users,
 		policy:      policy,
-		password:    password,
 		roles:       roles,
 		menus:       menus,
 	}
+}
+
+func (s *Service) Login(ctx context.Context, req LoginReq) (*LoginRes, error) {
+	logger := s.Log(ctx)
+	logger.Debug().Any("input", req).Msg("login attempt")
+
+	u, err := s.sysUserRepo.FindByAccount(ctx, req.Account)
+	if err != nil {
+		return nil, fmt.Errorf("login: %w", domain.ErrAccountOrPassword)
+	}
+
+	if !u.Enabled {
+		return nil, domain.ErrUserDisabled
+	}
+
+	if !u.ComparePassword(req.Password) {
+		return nil, domain.ErrAccountOrPassword
+	}
+
+	tokens, err := s.TokenManager.Issue(u.ID, u.Account)
+	if err != nil {
+		return nil, fmt.Errorf("issue token (userID=%d): %w", u.ID, err)
+	}
+
+	_ = s.sysUserRepo.UpdateLastLogin(ctx, u.ID, time.Now())
+
+	return &LoginRes{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	}, nil
+}
+
+func (s *Service) Logout(ctx context.Context, _ LogoutReq) (*LogoutRes, error) {
+	if _, err := s.TokenManager.RevokeCurrent(ctx); err != nil {
+		return nil, err
+	}
+	return &LogoutRes{}, nil
+}
+
+func (s *Service) RefreshToken(ctx context.Context, req RefreshTokenReq) (*RefreshTokenRes, error) {
+	logger := s.Log(ctx)
+	logger.Debug().Any("input", req).Msg("refresh token")
+
+	claims, err := s.TokenManager.Parse(req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+	if claims.Type != domain.TokenTypeRefresh {
+		return nil, domain.ErrTokenInvalid
+	}
+
+	revoked, err := s.TokenManager.IsRevoked(ctx, req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+	if revoked {
+		return nil, domain.ErrTokenRevoked
+	}
+
+	if err := s.TokenManager.Revoke(ctx, req.RefreshToken, claims.UserID, claims.ExpiresAt); err != nil {
+		return nil, err
+	}
+
+	tokens, err := s.TokenManager.Issue(claims.UserID, claims.Subject)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RefreshTokenRes{
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
+	}, nil
 }
 
 func (s *Service) List(ctx context.Context, in ListUserReq) (res domain.PageResult[UserItem], err error) {
@@ -45,12 +116,12 @@ func (s *Service) List(ctx context.Context, in ListUserReq) (res domain.PageResu
 		Enabled:     in.Enabled,
 	}
 
-	result, total, err := s.userRepo.List(ctx, q)
+	result, total, err := s.sysUserRepo.List(ctx, q)
 	if err != nil {
 		return res, err
 	}
 
-	items := lo.Map(result, func(item domain.User, _ int) UserItem {
+	items := lo.Map(result, func(item domain.SysUser, _ int) UserItem {
 		return s.toUserItem(item)
 	})
 
@@ -61,33 +132,31 @@ func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("creating user")
 
-	if existing, err := s.userRepo.FindByAccount(ctx, in.Account); err == nil && existing != nil {
+	if existing, err := s.sysUserRepo.FindByAccount(ctx, in.Account); err == nil && existing != nil {
 		return res, domain.ErrAccountExists
 	}
 
-	hash, err := s.password.Hash(in.Password)
-	if err != nil {
-		return res, fmt.Errorf("hash password for %s: %w", in.Account, err)
-	}
-
-	u := &domain.User{
+	u := &domain.SysUser{
 		Account:      in.Account,
-		PasswordHash: hash,
+		PasswordHash: in.Password,
 		NickName:     in.NickName,
 		Email:        in.Email,
 		Phone:        in.Phone,
 		Enabled:      true,
 	}
+	if err := u.PwdHash(); err != nil {
+		return res, fmt.Errorf("hash password for %s: %w", in.Account, err)
+	}
 	if len(u.NickName) == 0 {
 		u.NickName = in.Account
 	}
 
-	if err := s.userRepo.Create(ctx, u); err != nil {
+	if err := s.sysUserRepo.Create(ctx, u); err != nil {
 		return res, err
 	}
 
 	if len(in.RoleIDs) > 0 {
-		if err := s.userRepo.CreateWithRoles(ctx, u, in.RoleIDs); err != nil {
+		if err := s.sysUserRepo.CreateWithRoles(ctx, u, in.RoleIDs); err != nil {
 			return res, err
 		}
 		if err := s.policy.SyncUserRolesByIDs(ctx, u.Account, in.RoleIDs); err != nil {
@@ -103,7 +172,7 @@ func (s *Service) GetDetails(ctx context.Context) (res UserItem, err error) {
 	if !ok {
 		return res, domain.ErrNotLogin
 	}
-	user, err := s.userRepo.FindByIDWithRoles(ctx, currUser.UserID)
+	user, err := s.sysUserRepo.FindByIDWithRoles(ctx, currUser.UserID)
 	if err != nil {
 		return res, err
 	}
@@ -114,7 +183,7 @@ func (s *Service) Update(ctx context.Context, in UpdateUserReq) (res UpdateUserR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("update user")
 
-	current, err := s.userRepo.FindByID(ctx, in.UserID)
+	current, err := s.sysUserRepo.FindByID(ctx, in.UserID)
 	if err != nil {
 		return res, err
 	}
@@ -123,11 +192,10 @@ func (s *Service) Update(ctx context.Context, in UpdateUserReq) (res UpdateUserR
 		current.NickName = *in.NickName
 	}
 	if in.Password != nil {
-		pwd, err := s.password.Hash(*in.Password)
-		if err != nil {
-			return res, err
+		current.PasswordHash = *in.Password
+		if err := current.PwdHash(); err != nil {
+			return res, fmt.Errorf("hash password for %s: %w", current.Account, err)
 		}
-		current.PasswordHash = pwd
 	}
 	if in.Email != nil {
 		current.Email = *in.Email
@@ -142,14 +210,14 @@ func (s *Service) Update(ctx context.Context, in UpdateUserReq) (res UpdateUserR
 		current.Enabled = *in.Enabled
 	}
 	if len(in.RoleIDs) > 0 {
-		if err := s.userRepo.UpdateWithRoles(ctx, current, in.RoleIDs); err != nil {
+		if err := s.sysUserRepo.UpdateWithRoles(ctx, current, in.RoleIDs); err != nil {
 			return res, err
 		}
 		if err := s.policy.SyncUserRolesByIDs(ctx, current.Account, in.RoleIDs); err != nil {
 			return res, fmt.Errorf("sync user roles (account=%s): %w", current.Account, err)
 		}
 	} else {
-		if err := s.userRepo.Update(ctx, current); err != nil {
+		if err := s.sysUserRepo.Update(ctx, current); err != nil {
 			return res, err
 		}
 	}
@@ -160,7 +228,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	logger := s.Log(ctx)
 	logger.Debug().Int64("id", id).Msg("deleting user")
 
-	u, err := s.userRepo.FindByID(ctx, id)
+	u, err := s.sysUserRepo.FindByID(ctx, id)
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return err
 	}
@@ -172,7 +240,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 		return domain.ErrCannotDeleteAdmin
 	}
 
-	if err := s.userRepo.Delete(ctx, id); err != nil {
+	if err := s.sysUserRepo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("DeleteUser (id=%d): %w", id, err)
 	}
 	return nil
@@ -207,7 +275,7 @@ func (s *Service) GetCurrentUserMenus(ctx context.Context) ([]domain.MenuItem, e
 	return s.menus.ToMenuTree(rows), nil
 }
 
-func (s *Service) toUserItem(u domain.User) UserItem {
+func (s *Service) toUserItem(u domain.SysUser) UserItem {
 	return UserItem{
 		ID:          u.ID,
 		Account:     u.Account,

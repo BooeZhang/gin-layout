@@ -215,7 +215,7 @@ func (b *Builder) buildParameters(rec *EndpointRecord, spec *SpecModel) []ParamM
 	// 2. 从请求类型提取查询或请求体参数。
 	if rec.ReqType != nil {
 		reqType := rec.ReqType
-		for reqType.Kind() == reflect.Ptr {
+		for reqType.Kind() == reflect.Pointer {
 			reqType = reqType.Elem()
 		}
 
@@ -256,15 +256,14 @@ func (b *Builder) buildQueryParamsRecursive(t reflect.Type, params *[]ParamModel
 		return
 	}
 
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
+	for f := range t.Fields() {
 		if !f.IsExported() {
 			continue
 		}
 
 		if f.Anonymous {
 			ft := f.Type
-			for ft.Kind() == reflect.Ptr {
+			for ft.Kind() == reflect.Pointer {
 				ft = ft.Elem()
 			}
 			b.buildQueryParamsRecursive(ft, params)
@@ -311,7 +310,7 @@ func (b *Builder) buildBodyParam(t reflect.Type) []ParamModel {
 
 // 将 reflect.Type 映射为查询/路径参数的 Swagger 类型字符串。
 func (b *Builder) resolveParamType(t reflect.Type) string {
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	switch t.Kind() {
@@ -358,7 +357,7 @@ func (b *Builder) buildResponseSchema(rec *EndpointRecord, spec *SpecModel) stri
 	}
 
 	resType := rec.ResType
-	for resType.Kind() == reflect.Ptr {
+	for resType.Kind() == reflect.Pointer {
 		resType = resType.Elem()
 	}
 

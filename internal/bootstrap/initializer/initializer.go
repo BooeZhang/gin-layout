@@ -15,9 +15,9 @@ import (
 	"gin-layout/internal/common"
 	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
-	"gin-layout/internal/user"
-	"gin-layout/internal/role"
 	"gin-layout/internal/menu"
+	"gin-layout/internal/role"
+	"gin-layout/internal/sysuser"
 )
 
 type MenuDefinition struct {
@@ -50,32 +50,29 @@ type MenuDefinition struct {
 }
 
 type Initializer struct {
-	cfg            *config.Config
-	userRepo       *user.PGRepository
-	roleRepo       *role.PGRepository
-	menuRepo       *menu.PGRepository
-	passwordHasher common.PasswordHasher
-	policies       common.PolicyManager
-	logger         *infra.Logger
+	cfg      *config.Config
+	userRepo *sysuser.SysUserRepository
+	roleRepo *role.RoleRepository
+	menuRepo *menu.MenuRepository
+	policies common.PolicyManager
+	logger   *infra.Logger
 }
 
 func NewInitializer(
 	cfg *config.Config,
-	userRepo *user.PGRepository,
-	roleRepo *role.PGRepository,
-	menuRepo *menu.PGRepository,
-	passwordHasher common.PasswordHasher,
+	userRepo *sysuser.SysUserRepository,
+	roleRepo *role.RoleRepository,
+	menuRepo *menu.MenuRepository,
 	policies common.PolicyManager,
 	logger *infra.Logger,
 ) *Initializer {
 	return &Initializer{
-		cfg:            cfg,
-		userRepo:       userRepo,
-		roleRepo:       roleRepo,
-		menuRepo:       menuRepo,
-		passwordHasher: passwordHasher,
-		policies:       policies,
-		logger:         logger,
+		cfg:      cfg,
+		userRepo: userRepo,
+		roleRepo: roleRepo,
+		menuRepo: menuRepo,
+		policies: policies,
+		logger:   logger,
 	}
 }
 
@@ -114,15 +111,14 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 		return err
 	}
 	if errors.Is(err, domain.ErrNotFound) {
-		hash, err := i.passwordHasher.Hash(password)
-		if err != nil {
-			return err
-		}
-		u = &domain.User{
+		u = &domain.SysUser{
 			Account:      account,
-			PasswordHash: hash,
+			PasswordHash: password,
 			NickName:     "超级管理员",
 			Enabled:      true,
+		}
+		if err := u.PwdHash(); err != nil {
+			return err
 		}
 		if err := i.userRepo.Create(ctx, u); err != nil {
 			return err

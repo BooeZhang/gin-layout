@@ -7,7 +7,6 @@ import (
 
 	"gin-layout/config"
 	"gin-layout/internal/apidoc"
-	"gin-layout/internal/auth"
 	"gin-layout/internal/bootstrap/initializer"
 	"gin-layout/internal/common"
 	"gin-layout/internal/health"
@@ -16,8 +15,10 @@ import (
 	"gin-layout/internal/role"
 	"gin-layout/internal/router"
 	"gin-layout/internal/server"
-	"gin-layout/internal/user"
+	"gin-layout/internal/sysuser"
 )
+
+const blacklistCleanupInterval = 1 * time.Hour
 
 type App struct {
 	HTTPServer    *server.Server
@@ -42,20 +43,18 @@ func (i appInfra) Close() {
 }
 
 type appRepositories struct {
-	users          *user.PGRepository
-	roles          *role.PGRepository
-	menus          *menu.PGRepository
+	users          *sysuser.SysUserRepository
+	roles          *role.RoleRepository
+	menus          *menu.MenuRepository
 	tokenBlacklist *infra.TokenBlacklistRepository
 }
 
 type appServices struct {
-	health    *health.Service
-	auth      *auth.Service
-	users     *user.Service
-	roles     *role.Service
-	menus     *menu.Service
-	tokens    common.TokenManager
-	passwords common.PasswordHasher
+	health       *health.Service
+	users        *sysuser.Service
+	roles        *role.Service
+	menus        *menu.Service
+	tokenManager common.TokenManager
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -84,7 +83,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	services := newServices(cfg, logger, infra_, repos, policies)
 
-	init := initializer.NewInitializer(cfg, repos.users, repos.roles, repos.menus, services.passwords, policies, logger)
+	init := initializer.NewInitializer(cfg, repos.users, repos.roles, repos.menus, policies, logger)
 	if err := init.Run(context.Background()); err != nil {
 		logger.Error().Err(err).Msg("bootstrap initialization failed")
 		return nil, err
@@ -137,9 +136,10 @@ func newInfra(cfg *config.Config, logger *infra.Logger) (appInfra, error) {
 	}
 	logger.Info().Str("driver", cfg.Database.Driver).Msg("database connected")
 
+	// 迁移数据库表
 	if err := db.Migrate(
-		&user.UserModel{},
-		&user.UserRoleModel{},
+		&sysuser.SysUserModel{},
+		&sysuser.SysUserRoleModel{},
 		&role.RoleModel{},
 		&role.RoleMenuModel{},
 		&menu.MenuModel{},
@@ -164,7 +164,7 @@ func newInfra(cfg *config.Config, logger *infra.Logger) (appInfra, error) {
 
 func newRepositories(db *infra.Database) appRepositories {
 	return appRepositories{
-		users:          user.NewRepository(db.DB),
+		users:          sysuser.NewRepository(db.DB),
 		roles:          role.NewRepository(db.DB),
 		menus:          menu.NewRepository(db.DB),
 		tokenBlacklist: infra.NewTokenBlacklistRepository(db.DB),
@@ -178,32 +178,28 @@ func newServices(
 	repos appRepositories,
 	policies common.PolicyManager,
 ) appServices {
-	passwords := infra.NewBcryptHasher()
 	tokens := infra.NewJWTIssuer(&cfg.JWT)
-	baseSvc := common.NewBaseService(cfg, logger)
 	tokenManager := common.NewTokenManager(tokens, repos.tokenBlacklist)
+	baseSvc := common.NewBaseService(cfg, logger, tokenManager)
 	menuSvc := menu.NewService(baseSvc, repos.menus)
 	roleSvc := role.NewService(baseSvc, repos.roles, repos.users, menuSvc, policies)
 
 	return appServices{
-		health:    health.NewService(infra_.db, infra_.redis),
-		auth:      auth.NewService(baseSvc, repos.users, passwords, tokenManager),
-		users:     user.NewService(baseSvc, repos.users, policies, passwords, roleSvc, menuSvc),
-		roles:     roleSvc,
-		menus:     menuSvc,
-		tokens:    tokenManager,
-		passwords: passwords,
+		health:       health.NewService(infra_.db, infra_.redis),
+		users:        sysuser.NewService(baseSvc, repos.users, policies, roleSvc, menuSvc),
+		roles:        roleSvc,
+		menus:        menuSvc,
+		tokenManager: tokenManager,
 	}
 }
 
 func newAdminRouter(logger *infra.Logger, services appServices, policies common.PolicyManager, docRegistry *apidoc.Registry) *router.AdminRouter {
 	return router.NewAdminRouter(router.AdminRouterConfig{
-		Auth:        auth.NewHandler(services.auth),
 		Health:      health.NewHandler(services.health),
-		User:        user.NewHandler(services.users),
+		User:        sysuser.NewHandler(services.users),
 		Role:        role.NewHandler(services.roles),
 		Menu:        menu.NewHandler(services.menus),
-		Tokens:      services.tokens,
+		Tokens:      services.tokenManager,
 		Policy:      policies,
 		PermMap:     services.menus,
 		Log:         logger,
@@ -225,8 +221,6 @@ func (app *App) Cleanup() {
 		_ = app.Redis.Close()
 	}
 }
-
-const blacklistCleanupInterval = 1 * time.Hour
 
 // 启动一个后台 goroutine，定期从数据库中移除过期的令牌黑名单
 func (app *App) startBlacklistCleanup(repo *infra.TokenBlacklistRepository) {

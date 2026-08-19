@@ -50,7 +50,7 @@
 | **数据库驱动** | MySQL/PostgreSQL/SQLite/SQL Server | -     | 多数据库支持   |
 | **权限控制**   | Casbin                             | v3    | RBAC 权限模型  |
 | **JWT 认证**   | golang-jwt/jwt                     | v5    | 令牌生成和验证 |
-| **缓存**       | Redis                              | v9    | 会话和黑名单   |
+| **缓存**       | Redis                              | v9    | 令牌黑名单和缓存 |
 | **日志**       | rs/zerolog                         | v1.33 | 结构化日志     |
 | **配置管理**   | spf13/viper                        | v1.21 | TOML 配置加载  |
 | **密码加密**   | golang.org/x/crypto                | -     | bcrypt 算法    |
@@ -80,23 +80,15 @@ gin-layout/
 │
 ├── internal/                            # 核心业务代码（禁止外部导入）
 │   ├── bootstrap/                       # 应用启动与依赖注入
-│   │   ├── app.go                       # 应用初始化：logger → DB → migrate → seed → security → repos → services → handlers → router → server
-│   │   ├── initializer/
-│   │   │   ├── initializer.go           # 初始化管理器
-│   │   │   └── menu.json                # 默认菜单配置
-│   │   └── seed/
-│   │       └── admin.go                 # 创建默认超管账号和角色
+│   │   ├── app.go                       # 应用初始化：logger → DB → migrate → repos → services → policies → initializer → router → server
+│   │   └── initializer/
+│   │       ├── initializer.go           # 默认超管和菜单权限初始化
+│   │       └── menu.json                # 默认菜单配置
 │   │
-│   ├── auth/                            # 认证模块
-│   │   ├── handler.go                   # HTTP 处理器：登录、刷新令牌、登出
-│   │   ├── service.go                   # 认证业务逻辑
-│   │   ├── dto.go                       # 数据传输对象
-│   │   └── ports.go                     # 依赖接口定义
-│   │
-│   ├── user/                            # 用户管理
-│   │   ├── handler.go                   # 用户 CRUD HTTP 接口
-│   │   ├── service.go                   # 用户业务逻辑
-│   │   ├── repo.go                      # 用户数据访问
+│   ├── sysuser/                         # 系统用户与认证
+│   │   ├── handler.go                   # HTTP 处理器：登录、刷新令牌、登出、用户 CRUD
+│   │   ├── service.go                   # 用户与认证业务逻辑
+│   │   ├── repo.go                      # 用户和关联表数据访问
 │   │   ├── dto.go                       # DTO 定义
 │   │   └── ports.go                     # 接口定义
 │   │
@@ -122,39 +114,34 @@ gin-layout/
 │   │
 │   ├── middleware/                      # Gin 中间件
 │   │   ├── auth.go                      # JWT 认证中间件
-│   │   ├── auth_test.go                 # 认证中间件单元测试
 │   │   ├── rbac.go                      # Casbin 权限检查中间件
 │   │   ├── cors.go                      # CORS 跨域中间件
-│   │   ├── cors_test.go                 # CORS 测试
 │   │   ├── error.go                     # 错误响应中间件
 │   │   ├── logger.go                    # 请求日志中间件
 │   │   ├── recovery.go                  # 恐慌恢复中间件
 │   │   └── request_id.go                # 请求 ID 链路追踪中间件
 │   │
 │   ├── domain/                          # 领域模型和错误定义
-│   │   ├── user.go                      # User 聚合根
-│   │   ├── role.go                      # Role 聚合根
-│   │   ├── menu.go                      # Menu 聚合根
-│   │   ├── join.go                      # 多对多关联表定义
+│   │   ├── sys_user.go                  # SysUser 领域模型
+│   │   ├── role.go                      # Role 领域模型
+│   │   ├── menu.go                      # Menu 领域模型
+│   │   ├── join.go                      # 多对多关联结构定义
 │   │   ├── page.go                      # 分页请求/响应（泛型）
-│   │   ├── context.go                   # CurrentUser 上下文传递
+│   │   ├── context.go                   # CurrentUser/Token 上下文传递
 │   │   ├── error.go                     # DomainError 业务错误定义
-│   │   ├── errors.go                    # 业务错误常量
-│   │   └── token.go                     # Token 相关定义
+│   │   └── errors.go                    # 业务错误常量
 │   │
 │   ├── infra/                           # 基础设施层
-│   │   ├── database.go                  # 数据库连接初始化
+│   │   ├── database.go                  # 数据库连接与迁移
 │   │   ├── crud.go                      # 泛型 CRUDRepository 实现
 │   │   ├── jwt.go                       # JWT 令牌服务
 │   │   ├── logger.go                    # zerolog 日志初始化
-│   │   ├── password.go                  # bcrypt 密码加密/验证
 │   │   ├── policy.go                    # Casbin 权限策略管理
 │   │   ├── cache.go                     # Redis 缓存
 │   │   ├── token_blacklist.go           # 令牌黑名单实现
 │   │   └── errors.go                    # GORM 错误转换
 │   │
 │   ├── router/                          # 路由配置
-│   │   ├── router.go                    # Router 接口定义
 │   │   └── admin.go                     # 管理后台路由组
 │   │
 │   ├── server/                          # HTTP 服务器
@@ -165,15 +152,15 @@ gin-layout/
 │   │   ├── builder.go                   # 文档构建器
 │   │   ├── config.go                    # 文档配置
 │   │   ├── model.go                     # 文档数据模型
-│   │   ├── publisher.go                 # 文档发布器
+│   │   ├── publisher.go                 # Redoc 发布器
 │   │   ├── registry.go                  # Schema 注册表
 │   │   ├── schema_builder.go            # Schema 构建器
-│   │   ├── swagger2_renderer.go         # Swagger 2.0 渲染
-│   │   └── testdata/                    # 测试数据
+│   │   ├── swagger2_renderer.go         # OpenAPI/Swagger 2.0 渲染
+│   │   └── defaults.go                  # 文档默认值
 │   │
 │   └── common/                          # 通用工具
 │       ├── response.go                  # 统一响应格式
-│       ├── base.go                      # 基础模型
+│       ├── base.go                      # 基础服务
 │       ├── interfaces.go                # 通用接口定义
 │       └── token.go                     # Token 工具函数
 │
@@ -261,7 +248,7 @@ make build
 
 #### 5. 访问服务
 
-- **API 文档**：http://localhost:8085/swagger/index.html
+- **API 文档**：http://localhost:8085/docs/
 - **健康检查**：http://localhost:8085/health
 - **默认登录**：admin / admin123
 
@@ -283,7 +270,7 @@ make docker-down
 ### 登录与获取令牌
 
 ```bash
-POST /login
+POST /api/auth/login
 Content-Type: application/json
 
 {
@@ -297,8 +284,7 @@ Response:
   "message": "ok",
   "data": {
     "accessToken": "eyJ...",
-    "refreshToken": "eyJ...",
-    "user": {...}
+    "refreshToken": "eyJ..."
   }
 }
 ```
@@ -325,11 +311,11 @@ Response:
 ### 刷新令牌
 
 ```bash
-POST /refresh
+POST /api/auth/refresh-token
 Content-Type: application/json
 
 {
-  "refreshToken": "<refreshToken>"
+  "refresh_token": "<refreshToken>"
 }
 
 Response:
@@ -448,12 +434,12 @@ Database (GORM)
 ### 中间件顺序
 
 1. RequestID - 生成请求 ID
-2. Logger - 记录日志
-3. CORS - 跨域处理
-4. Auth - JWT 认证
-5. RBAC - 权限检查
-6. Recovery - 恐慌恢复
-7. Error - 错误响应
+2. Recovery - 恐慌恢复
+3. Error - 错误响应
+4. Logger - 记录日志
+5. CORS - 跨域处理
+6. Auth - JWT 认证（受保护路由组）
+7. RBAC - 权限检查（受保护路由组）
 
 ### 启动顺序
 
@@ -461,13 +447,14 @@ Database (GORM)
 2. 初始化日志
 3. 连接数据库
 4. 自动迁移表结构
-5. 创建种子数据（默认超管）
-6. 初始化安全组件（JWT、Casbin、Redis）
-7. 创建数据访问层
+5. 连接 Redis
+6. 创建数据访问层
+7. 初始化安全组件（Casbin、JWT）
 8. 创建业务层
-9. 创建 HTTP 处理器
-10. 注册路由
-11. 启动 HTTP 服务
+9. 初始化默认超管和菜单权限
+10. 加载权限映射
+11. 注册路由并构建 API 文档
+12. 启动 HTTP 服务
 
 ## 🐛 常见问题
 
@@ -475,7 +462,7 @@ Database (GORM)
 A: 修改 `etc/config.toml` 中的 `[database]` 配置，支持 mysql、postgresql、sqlite、sqlserver
 
 **Q: JWT 令牌过期了怎么办？**
-A: 使用 Refresh Token 调用 `/refresh` 端点获取新的 Access Token
+A: 使用 Refresh Token 调用 `/api/auth/refresh-token` 端点获取新的 Access Token
 
 **Q: 如何自定义业务错误码？**
 A: 在 `internal/domain/errors.go` 中定义错误，返回 `DomainError` 类型

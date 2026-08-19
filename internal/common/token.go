@@ -10,7 +10,7 @@ import (
 	"gin-layout/internal/domain"
 )
 
-// ParseBearer extracts the Bearer token from an Authorization header.
+// ParseBearer 从授权标头提取 token
 func ParseBearer(authHeader string) (string, error) {
 	const prefix = "Bearer "
 	if !strings.HasPrefix(authHeader, prefix) {
@@ -19,7 +19,6 @@ func ParseBearer(authHeader string) (string, error) {
 	return strings.TrimPrefix(authHeader, prefix), nil
 }
 
-// TokenHash returns the SHA-256 hex digest of the raw token.
 func TokenHash(raw string) string {
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])

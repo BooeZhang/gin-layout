@@ -157,7 +157,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 		return domain.ErrCannotDeleteAdminRole
 	}
 
-	if err := s.repo.DeleteWithRelat(ctx, id); err != nil {
+	if err := s.repo.DeleteWithRoleID(ctx, id); err != nil {
 		return fmt.Errorf("DeleteRole (id=%d): %w", id, err)
 	}
 	if err := s.policies.DeleteRole(ctx, role.Code); err != nil {

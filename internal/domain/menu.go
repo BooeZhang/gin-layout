@@ -29,7 +29,7 @@ type MenuItem struct {
 	Method     string     `json:"method"`
 	APIPath    string     `json:"apiPath"`
 	PermCode   string     `json:"permCode"`
-	Children   []MenuItem `json:"children,omitempty"`
+	Children   []MenuItem `json:"children,omitzero"`
 }
 
 const (

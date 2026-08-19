@@ -13,69 +13,69 @@ import (
 type swagSpec struct {
 	Swagger             string                     `json:"swagger"`
 	Info                swagInfo                   `json:"info"`
-	Host                string                     `json:"host,omitempty"`
-	BasePath            string                     `json:"basePath,omitempty"`
-	Schemes             []string                   `json:"schemes,omitempty"`
-	Tags                []swagTag                  `json:"tags,omitempty"`
+	Host                string                     `json:"host,omitzero"`
+	BasePath            string                     `json:"basePath,omitzero"`
+	Schemes             []string                   `json:"schemes,omitzero"`
+	Tags                []swagTag                  `json:"tags,omitzero"`
 	Paths               map[string]swagPathItem    `json:"paths"`
-	Definitions         map[string]swagProperty    `json:"definitions,omitempty"`
-	SecurityDefinitions map[string]swagSecurityDef `json:"securityDefinitions,omitempty"`
+	Definitions         map[string]swagProperty    `json:"definitions,omitzero"`
+	SecurityDefinitions map[string]swagSecurityDef `json:"securityDefinitions,omitzero"`
 }
 
 type swagInfo struct {
 	Title       string `json:"title"`
-	Description string `json:"description,omitempty"`
+	Description string `json:"description,omitzero"`
 	Version     string `json:"version"`
 }
 
 type swagTag struct {
 	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	Description string `json:"description,omitzero"`
 }
 
 type swagPathItem map[string]swagOperation
 
 type swagOperation struct {
-	Summary     string                  `json:"summary,omitempty"`
-	Description string                  `json:"description,omitempty"`
-	Tags        []string                `json:"tags,omitempty"`
-	Parameters  []swagParameter         `json:"parameters,omitempty"`
+	Summary     string                  `json:"summary,omitzero"`
+	Description string                  `json:"description,omitzero"`
+	Tags        []string                `json:"tags,omitzero"`
+	Parameters  []swagParameter         `json:"parameters,omitzero"`
 	Responses   map[string]swagResponse `json:"responses"`
-	Deprecated  bool                    `json:"deprecated,omitempty"`
-	Security    []map[string][]string   `json:"security,omitempty"`
-	Consumes    []string                `json:"consumes,omitempty"`
-	Produces    []string                `json:"produces,omitempty"`
+	Deprecated  bool                    `json:"deprecated,omitzero"`
+	Security    []map[string][]string   `json:"security,omitzero"`
+	Consumes    []string                `json:"consumes,omitzero"`
+	Produces    []string                `json:"produces,omitzero"`
 }
 
 type swagParameter struct {
 	In          string        `json:"in"`
 	Name        string        `json:"name"`
-	Description string        `json:"description,omitempty"`
-	Required    bool          `json:"required,omitempty"`
-	Type        string        `json:"type,omitempty"`
-	Format      string        `json:"format,omitempty"`
-	Schema      *swagProperty `json:"schema,omitempty"`
+	Description string        `json:"description,omitzero"`
+	Required    bool          `json:"required,omitzero"`
+	Type        string        `json:"type,omitzero"`
+	Format      string        `json:"format,omitzero"`
+	Schema      *swagProperty `json:"schema,omitzero"`
 }
 
 type swagResponse struct {
 	Description string        `json:"description"`
-	Schema      *swagProperty `json:"schema,omitempty"`
+	Schema      *swagProperty `json:"schema,omitzero"`
 }
 
 type swagProperty struct {
-	Ref         string                  `json:"$ref,omitempty"`
-	Type        string                  `json:"type,omitempty"`
-	Format      string                  `json:"format,omitempty"`
-	Description string                  `json:"description,omitempty"`
-	Properties  map[string]swagProperty `json:"properties,omitempty"`
-	Items       *swagProperty           `json:"items,omitempty"`
-	Required    []string                `json:"required,omitempty"`
+	Ref         string                  `json:"$ref,omitzero"`
+	Type        string                  `json:"type,omitzero"`
+	Format      string                  `json:"format,omitzero"`
+	Description string                  `json:"description,omitzero"`
+	Properties  map[string]swagProperty `json:"properties,omitzero"`
+	Items       *swagProperty           `json:"items,omitzero"`
+	Required    []string                `json:"required,omitzero"`
 }
 
 type swagSecurityDef struct {
 	Type string `json:"type"`
-	Name string `json:"name,omitempty"`
-	In   string `json:"in,omitempty"`
+	Name string `json:"name,omitzero"`
+	In   string `json:"in,omitzero"`
 }
 
 // ---- 渲染器 ----

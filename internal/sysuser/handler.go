@@ -1,4 +1,4 @@
-package user
+package sysuser
 
 import (
 	"github.com/gin-gonic/gin"
@@ -13,6 +13,18 @@ type Handler struct {
 
 func NewHandler(svc *Service) *Handler {
 	return &Handler{svc: svc}
+}
+
+func (h *Handler) Login(c *gin.Context, req LoginReq) (*LoginRes, error) {
+	return h.svc.Login(c.Request.Context(), req)
+}
+
+func (h *Handler) RefreshToken(c *gin.Context, req RefreshTokenReq) (*RefreshTokenRes, error) {
+	return h.svc.RefreshToken(c.Request.Context(), req)
+}
+
+func (h *Handler) Logout(c *gin.Context, req LogoutReq) (*LogoutRes, error) {
+	return h.svc.Logout(c.Request.Context(), req)
 }
 
 func (h *Handler) List(c *gin.Context, req ListUserReq) (domain.PageResult[UserItem], error) {

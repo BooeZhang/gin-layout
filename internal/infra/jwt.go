@@ -13,6 +13,7 @@ import (
 
 type jwtClaims struct {
 	UserID int64
+	Type   string
 	jwtlib.RegisteredClaims
 }
 
@@ -31,11 +32,11 @@ func NewJWTIssuer(cfg *config.JWTConfig) *JWTIssuer {
 }
 
 func (i *JWTIssuer) Issue(userID int64, subject string) (domain.TokenPair, error) {
-	accessToken, err := i.sign(userID, subject, i.accessExpired)
+	accessToken, err := i.sign(userID, subject, domain.TokenTypeAccess, i.accessExpired)
 	if err != nil {
 		return domain.TokenPair{}, err
 	}
-	refreshToken, err := i.sign(userID, subject, i.refreshExpired)
+	refreshToken, err := i.sign(userID, subject, domain.TokenTypeRefresh, i.refreshExpired)
 	if err != nil {
 		return domain.TokenPair{}, err
 	}
@@ -64,14 +65,16 @@ func (i *JWTIssuer) Parse(raw string) (*domain.TokenClaims, error) {
 	return &domain.TokenClaims{
 		UserID:    parsed.UserID,
 		Subject:   parsed.Subject,
+		Type:      parsed.Type,
 		ExpiresAt: expiresAt,
 	}, nil
 }
 
-func (i *JWTIssuer) sign(userID int64, subject string, ttl time.Duration) (string, error) {
+func (i *JWTIssuer) sign(userID int64, subject, tokenType string, ttl time.Duration) (string, error) {
 	now := time.Now()
 	jwtToken := jwtlib.NewWithClaims(jwtlib.SigningMethodHS256, jwtClaims{
 		UserID: userID,
+		Type:   tokenType,
 		RegisteredClaims: jwtlib.RegisteredClaims{
 			ExpiresAt: jwtlib.NewNumericDate(now.Add(ttl)),
 			IssuedAt:  jwtlib.NewNumericDate(now),
