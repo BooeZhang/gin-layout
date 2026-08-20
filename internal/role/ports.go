@@ -11,15 +11,15 @@ type Repository interface {
 	Create(ctx context.Context, role *domain.Role) error
 	Update(ctx context.Context, role *domain.Role) error
 	Delete(ctx context.Context, id int64) error
-	FindByID(ctx context.Context, id int64) (*domain.Role, error)
+	FindByID(ctx context.Context, id int64) (*domain.Role, bool, error)
 	FindByIDs(ctx context.Context, ids []int64) ([]domain.Role, error)
 	CreateWithMenu(ctx context.Context, role *domain.Role, menuIDs []int64) error
 	UpdateWithMenu(ctx context.Context, role *domain.Role, menuIDs []int64) error
 	DeleteWithRoleID(ctx context.Context, roleID int64) error
-	FindByCode(ctx context.Context, code string) (*domain.Role, error)
+	FindByCode(ctx context.Context, code string) (*domain.Role, bool, error)
 	FindCodesByIDs(ctx context.Context, roleIDs []int64) ([]string, error)
 	FindByUserIDs(ctx context.Context, userIDs []int64, enabled *bool) ([]domain.Role, error)
-	FindByIDWithPerm(ctx context.Context, roleID int64) (*domain.Role, error)
+	FindByIDWithPerm(ctx context.Context, roleID int64) (*domain.Role, bool, error)
 	ListAll(ctx context.Context) ([]domain.Role, error)
 	RoleAddUser(ctx context.Context, data []domain.UserRole) error
 	RoleRemoveUser(ctx context.Context, roleID int64, userIDs []int64) error

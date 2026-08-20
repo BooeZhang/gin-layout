@@ -18,6 +18,8 @@ import (
 	"gin-layout/internal/server"
 	"gin-layout/internal/sysuser"
 	"gin-layout/internal/token"
+
+	"github.com/gin-gonic/gin"
 )
 
 const blacklistCleanupInterval = 1 * time.Hour
@@ -130,13 +132,12 @@ func NewApp(cfg *config.Config) (*App, error) {
 	}, logger, adminRouter, pub)
 
 	// 路由注册后主动构建 spec，确保启动时即可发现错误。
-	if err := pub.Build(); err != nil {
-		logger.Error().Err(err).Msg("build API documentation failed")
-		return nil, err
-	}
-	logger.Info().Msg("API documentation configured")
-
-	if cfg.APIDoc.Enabled {
+	if cfg.Server.Mode != gin.ReleaseMode {
+		if err := pub.Build(); err != nil {
+			logger.Error().Err(err).Msg("build API documentation failed")
+			return nil, err
+		}
+		logger.Info().Msg("API documentation configured")
 		logger.Info().
 			Str("url", fmt.Sprintf("http://%s:%d%s", cfg.Server.Host, cfg.Server.Port, pub.UIPath())).
 			Msg("API docs (Redoc) available")
@@ -147,6 +148,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	appReady = true
 	app := &App{HTTPServer: httpServer, DB: infra_.db, Redis: infra_.redis, Logger: logger}
 	app.startBlacklistCleanup(repos.tokenBlacklist)
+
 	return app, nil
 }
 
@@ -156,22 +158,27 @@ func newInfra(cfg *config.Config, logger *infra.Logger) (appInfra, error) {
 		logger.Error().Err(err).Msg("connect database failed")
 		return appInfra{}, err
 	}
+
 	logger.Info().Str("driver", cfg.Database.Driver).Msg("database connected")
 
-	// 迁移数据库表
-	if err := db.Migrate(
-		&sysuser.SysUserModel{},
-		&sysuser.SysUserRoleModel{},
-		&role.RoleModel{},
-		&role.RoleMenuModel{},
-		&menu.MenuModel{},
-		&infra.TokenBlacklistModel{},
-	); err != nil {
-		logger.Error().Err(err).Msg("database migration failed")
-		_ = db.Close()
-		return appInfra{}, err
+	if cfg.Server.Mode != gin.ReleaseMode {
+		// 迁移数据库表
+		migErr := db.Migrate(
+			&sysuser.SysUserModel{},
+			&sysuser.SysUserRoleModel{},
+			&role.RoleModel{},
+			&role.RoleMenuModel{},
+			&menu.MenuModel{},
+			&infra.TokenBlacklistModel{},
+		)
+		if migErr != nil {
+			logger.Error().Err(err).Msg("database migration failed")
+			_ = db.Close()
+			return appInfra{}, err
+		}
+
+		logger.Info().Msg("database migration completed")
 	}
-	logger.Info().Msg("database migration completed")
 
 	redisClient, err := infra.NewRedis(&cfg.Redis)
 	if err != nil {

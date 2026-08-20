@@ -11,10 +11,10 @@ type Repository interface {
 	Create(ctx context.Context, entity *domain.SysUser) error
 	Update(ctx context.Context, entity *domain.SysUser) error
 	Delete(ctx context.Context, id int64) error
-	FindByID(ctx context.Context, id int64) (*domain.SysUser, error)
+	FindByID(ctx context.Context, id int64) (*domain.SysUser, bool, error)
 	List(ctx context.Context, q userListQuery) ([]domain.SysUser, int64, error)
-	FindByAccount(ctx context.Context, account string) (*domain.SysUser, error)
-	FindByIDWithRoles(ctx context.Context, id int64) (*domain.SysUser, error)
+	FindByAccount(ctx context.Context, account string) (*domain.SysUser, bool, error)
+	FindByIDWithRoles(ctx context.Context, id int64) (*domain.SysUser, bool, error)
 	UpdateLastLogin(ctx context.Context, userID int64, lastLoginAt time.Time) error
 	CreateWithRoles(ctx context.Context, u *domain.SysUser, roleIDs []int64) error
 	UpdateWithRoles(ctx context.Context, u *domain.SysUser, roleIDs []int64) error

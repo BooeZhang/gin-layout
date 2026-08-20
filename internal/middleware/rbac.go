@@ -12,13 +12,13 @@ import (
 func RBAC(enforcer policy.Manager, permissions policy.PermissionResolver, logger *zerolog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if enforcer == nil {
-			_ = c.Error(token.ErrNotLogin)
+			_ = c.Error(token.ErrUnauthenticated)
 			return
 		}
 
 		userAccount, ok := reqctx.CurrentUserFromContext(c.Request.Context())
 		if !ok {
-			_ = c.Error(token.ErrNotLogin)
+			_ = c.Error(token.ErrUnauthenticated)
 			return
 		}
 		requestID, _ := reqctx.RequestIDFromContext(c.Request.Context())
@@ -48,7 +48,7 @@ func RBAC(enforcer policy.Manager, permissions policy.PermissionResolver, logger
 		}
 
 		if !pass {
-			_ = c.Error(policy.ErrNotPermission)
+			_ = c.Error(policy.ErrPermissionDenied)
 			return
 		}
 

@@ -77,7 +77,6 @@ type InitializerConfig struct {
 
 // APIDocConfig API 文档配置
 type APIDocConfig struct {
-	Enabled     bool   `mapstructure:"enabled"`
 	Strict      bool   `mapstructure:"strict"`
 	JSONPath    string `mapstructure:"jsonPath"`
 	UIPath      string `mapstructure:"uiPath"`

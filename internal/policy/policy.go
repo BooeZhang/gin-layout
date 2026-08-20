@@ -2,12 +2,10 @@ package policy
 
 import (
 	"context"
-	"net/http"
-
-	"gin-layout/internal/domain"
+	"errors"
 )
 
-var ErrNotPermission = domain.NewDomainError(30130, http.StatusForbidden, "没有权限")
+var ErrPermissionDenied = errors.New("没有权限")
 
 type Manager interface {
 	SyncUserRoles(ctx context.Context, userAccount string, roleCodes []string) error

@@ -2,7 +2,6 @@ package role
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/samber/lo"
@@ -67,11 +66,11 @@ func (s *Service) Create(ctx context.Context, in CreateRoleReq) (res CreateRoleR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("creating role")
 
-	_, err = s.repo.FindByCode(ctx, in.Code)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	_, found, err := s.repo.FindByCode(ctx, in.Code)
+	if err != nil {
 		return res, err
 	}
-	if !errors.Is(err, domain.ErrNotFound) {
+	if found {
 		return res, ErrRoleExists
 	}
 
@@ -99,9 +98,12 @@ func (s *Service) GetOne(ctx context.Context, id int64) (*RoleItem, error) {
 	logger := s.Log(ctx)
 	logger.Debug().Int64("id", id).Msg("getting role")
 
-	r, err := s.repo.FindByIDWithPerm(ctx, id)
+	r, found, err := s.repo.FindByIDWithPerm(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if !found {
+		return nil, ErrRoleNotFound
 	}
 
 	res := &RoleItem{
@@ -124,9 +126,12 @@ func (s *Service) Update(ctx context.Context, in UpdateRoleReq) (res UpdateRoleR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("updating role")
 
-	r, err := s.repo.FindByID(ctx, in.RoleID)
+	r, found, err := s.repo.FindByID(ctx, in.RoleID)
 	if err != nil {
 		return res, err
+	}
+	if !found {
+		return res, ErrRoleNotFound
 	}
 
 	if in.Name != nil {
@@ -161,11 +166,11 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	logger := s.Log(ctx)
 	logger.Debug().Int64("roleID", id).Msg("deleting role")
 
-	role, err := s.repo.FindByID(ctx, id)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	role, found, err := s.repo.FindByID(ctx, id)
+	if err != nil {
 		return err
 	}
-	if errors.Is(err, domain.ErrNotFound) {
+	if !found {
 		return nil
 	}
 
@@ -206,11 +211,11 @@ func (s *Service) UserAdd(ctx context.Context, in UserAddReq) (res UserAddRes, e
 	logger := s.Log(ctx)
 	logger.Debug().Ints64("userIDs", in.UserIDs).Int64("roleID", in.RoleID).Msg("adding role user")
 
-	role, err := s.repo.FindByID(ctx, in.RoleID)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	role, found, err := s.repo.FindByID(ctx, in.RoleID)
+	if err != nil {
 		return res, err
 	}
-	if errors.Is(err, domain.ErrNotFound) {
+	if !found {
 		return res, nil
 	}
 
@@ -222,7 +227,7 @@ func (s *Service) UserAdd(ctx context.Context, in UserAddReq) (res UserAddRes, e
 	}
 
 	users, err := s.userQuery.FindByIDs(ctx, in.UserIDs)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	if err != nil {
 		return res, fmt.Errorf("FindUsers for RoleAdd (roleID=%d, userIDs=%v): %w", in.RoleID, in.UserIDs, err)
 	}
 	for _, user := range users {
@@ -237,11 +242,11 @@ func (s *Service) UserRemove(ctx context.Context, in UserRemoveReq) (res UserRem
 	logger := s.Log(ctx)
 	logger.Debug().Ints64("userIDs", in.UserIDs).Int64("roleID", in.RoleID).Msg("removing role user")
 
-	role, err := s.repo.FindByID(ctx, in.RoleID)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	role, found, err := s.repo.FindByID(ctx, in.RoleID)
+	if err != nil {
 		return res, err
 	}
-	if errors.Is(err, domain.ErrNotFound) {
+	if !found {
 		return res, nil
 	}
 
@@ -250,7 +255,7 @@ func (s *Service) UserRemove(ctx context.Context, in UserRemoveReq) (res UserRem
 	}
 
 	users, err := s.userQuery.FindByIDs(ctx, in.UserIDs)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	if err != nil {
 		return res, fmt.Errorf("FindUsers for RoleRemove (roleID=%d, userIDs=%v): %w", in.RoleID, in.UserIDs, err)
 	}
 	for _, user := range users {

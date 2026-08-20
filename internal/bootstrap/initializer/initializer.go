@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -94,11 +93,11 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 	roleName := cmp.Or(i.cfg.Initializer.AdminRoleName, "超级管理员")
 	roleCode := cmp.Or(i.cfg.Initializer.AdminRoleCode, "ADMIN")
 
-	r, err := i.roleRepo.FindByCode(ctx, roleCode)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	r, found, err := i.roleRepo.FindByCode(ctx, roleCode)
+	if err != nil {
 		return err
 	}
-	if errors.Is(err, domain.ErrNotFound) {
+	if !found {
 		r = &domain.Role{Name: roleName, Code: roleCode}
 		if err := i.roleRepo.Create(ctx, r); err != nil {
 			return err
@@ -108,11 +107,11 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 		i.logger.Info().Str("role", roleCode).Msg("super admin role already exists")
 	}
 
-	u, err := i.userRepo.FindByAccount(ctx, account)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	u, found, err := i.userRepo.FindByAccount(ctx, account)
+	if err != nil {
 		return err
 	}
-	if errors.Is(err, domain.ErrNotFound) {
+	if !found {
 		u = &domain.SysUser{
 			Account:      account,
 			PasswordHash: password,

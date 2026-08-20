@@ -2,7 +2,6 @@ package sysuser
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -50,9 +49,12 @@ func (s *Service) Login(ctx context.Context, req LoginReq) (*LoginRes, error) {
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", req).Msg("login attempt")
 
-	u, err := s.sysUserRepo.FindByAccount(ctx, req.Account)
+	u, found, err := s.sysUserRepo.FindByAccount(ctx, req.Account)
 	if err != nil {
-		return nil, fmt.Errorf("login: %w", ErrAccountOrPassword)
+		return nil, fmt.Errorf("find login user: %w", err)
+	}
+	if !found {
+		return nil, fmt.Errorf("login: %w", ErrInvalidCredentials)
 	}
 
 	if !u.Enabled {
@@ -60,7 +62,7 @@ func (s *Service) Login(ctx context.Context, req LoginReq) (*LoginRes, error) {
 	}
 
 	if !u.ComparePassword(req.Password) {
-		return nil, ErrAccountOrPassword
+		return nil, ErrInvalidCredentials
 	}
 
 	tokens, err := s.tokens.Issue(u.ID, u.Account)
@@ -147,7 +149,11 @@ func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("creating user")
 
-	if existing, err := s.sysUserRepo.FindByAccount(ctx, in.Account); err == nil && existing != nil {
+	existing, found, err := s.sysUserRepo.FindByAccount(ctx, in.Account)
+	if err != nil {
+		return res, err
+	}
+	if found && existing != nil {
 		return res, ErrAccountExists
 	}
 
@@ -185,11 +191,14 @@ func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserR
 func (s *Service) GetDetails(ctx context.Context) (res UserItem, err error) {
 	currUser, ok := reqctx.CurrentUserFromContext(ctx)
 	if !ok {
-		return res, token.ErrNotLogin
+		return res, token.ErrUnauthenticated
 	}
-	user, err := s.sysUserRepo.FindByIDWithRoles(ctx, currUser.UserID)
+	user, found, err := s.sysUserRepo.FindByIDWithRoles(ctx, currUser.UserID)
 	if err != nil {
 		return res, err
+	}
+	if !found {
+		return res, ErrUserNotFound
 	}
 	return s.toUserItem(*user), nil
 }
@@ -198,9 +207,12 @@ func (s *Service) Update(ctx context.Context, in UpdateUserReq) (res UpdateUserR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("update user")
 
-	current, err := s.sysUserRepo.FindByID(ctx, in.UserID)
+	current, found, err := s.sysUserRepo.FindByID(ctx, in.UserID)
 	if err != nil {
 		return res, err
+	}
+	if !found {
+		return res, ErrUserNotFound
 	}
 
 	if in.NickName != nil {
@@ -243,11 +255,11 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	logger := s.Log(ctx)
 	logger.Debug().Int64("id", id).Msg("deleting user")
 
-	u, err := s.sysUserRepo.FindByID(ctx, id)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	u, found, err := s.sysUserRepo.FindByID(ctx, id)
+	if err != nil {
 		return err
 	}
-	if errors.Is(err, domain.ErrNotFound) {
+	if !found {
 		return nil
 	}
 
@@ -264,12 +276,12 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 func (s *Service) GetCurrentUserMenus(ctx context.Context) ([]domain.MenuItem, error) {
 	currUser, ok := reqctx.CurrentUserFromContext(ctx)
 	if !ok {
-		return nil, token.ErrNotLogin
+		return nil, token.ErrUnauthenticated
 	}
 
 	if s.IsAdmin(currUser.Account) {
 		rows, err := s.menus.ListAll(ctx)
-		if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		if err != nil {
 			return nil, err
 		}
 		return s.menus.ToMenuTree(rows), nil

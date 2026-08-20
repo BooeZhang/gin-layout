@@ -1,12 +1,9 @@
 package web
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
-	"gin-layout/internal/domain"
 )
 
 type Response struct {
@@ -20,18 +17,6 @@ func OK(c *gin.Context, data any) {
 }
 
 func Error(c *gin.Context, err error) {
-	httpStatus, code, message := DecodeError(err)
-	c.JSON(httpStatus, Response{Code: code, Message: message})
-}
-
-func DecodeError(err error) (httpStatus int, bizCode int, message string) {
-	if err == nil {
-		return http.StatusOK, 0, "success"
-	}
-
-	if codedErr, ok := errors.AsType[domain.CodedError](err); ok {
-		return codedErr.ResponseHTTPStatus(), codedErr.ResponseCode(), codedErr.ResponseMessage()
-	}
-
-	return http.StatusInternalServerError, 50001, "internal server error"
+	descriptor := DecodeError(err)
+	c.JSON(descriptor.HTTPStatus, Response{Code: descriptor.Code, Message: descriptor.Message})
 }

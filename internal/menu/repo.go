@@ -2,6 +2,7 @@ package menu
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/samber/lo"
@@ -128,19 +129,22 @@ func NewRepository(db *gorm.DB) *MenuRepository {
 func (r *MenuRepository) ListAll(ctx context.Context) ([]domain.Menu, error) {
 	models, err := gorm.G[MenuModel](r.db).Order("sort asc, id asc").Find(ctx)
 	if err != nil {
-		return nil, infra.NormalizeError(err)
+		return nil, err
 	}
 	menus := lo.Map(models, func(m MenuModel, _ int) domain.Menu { return m.toDomain() })
 	return menus, nil
 }
 
-func (r *MenuRepository) FindByCode(ctx context.Context, code string) (*domain.Menu, error) {
+func (r *MenuRepository) FindByCode(ctx context.Context, code string) (*domain.Menu, bool, error) {
 	m, err := gorm.G[MenuModel](r.db).Where("code = ?", code).First(ctx)
 	if err != nil {
-		return nil, infra.NormalizeError(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
 	}
 	menu := m.toDomain()
-	return &menu, nil
+	return &menu, true, nil
 }
 
 func (r *MenuRepository) FindMenusByRoleIDs(ctx context.Context, roleIDs []int64, enabled *bool) ([]domain.Menu, error) {
@@ -160,7 +164,7 @@ func (r *MenuRepository) FindMenusByRoleIDs(ctx context.Context, roleIDs []int64
 	var models []MenuModel
 	err := db.Select("DISTINCT menus.*").Order("menus.sort ASC, menus.id ASC").Scan(&models).Error
 	if err != nil {
-		return nil, infra.NormalizeError(err)
+		return nil, err
 	}
 
 	menus := lo.Map(models, func(m MenuModel, _ int) domain.Menu { return m.toDomain() })
@@ -183,5 +187,5 @@ func (r *MenuRepository) CreateAll(ctx context.Context, menus []domain.Menu) err
 			}),
 		}).
 		Create(&models).Error
-	return infra.NormalizeError(err)
+	return err
 }

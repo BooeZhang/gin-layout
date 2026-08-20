@@ -36,7 +36,6 @@ outputPath = "logs"
 
 
 [apidoc]
-enabled = true
 title = "Gin Layout API"
 version = "1.0.0"
 description = "Gin Layout API 文档"

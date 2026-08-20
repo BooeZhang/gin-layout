@@ -14,9 +14,9 @@ type ListRoleReq struct {
 }
 
 type CreateRoleReq struct {
-	Name          string  `json:"name" binding:"required"`
-	Code          string  `json:"code" binding:"required"`
-	Description   string  `json:"description"`
+	Name          string  `json:"name" binding:"required" desc:"角色名"`
+	Code          string  `json:"code" binding:"required" desc:"角色编码"`
+	Description   string  `json:"description" desc:"描述"`
 	Sort          int     `json:"sort"`
 	Enabled       bool    `json:"enabled"`
 	PermissionIDs []int64 `json:"permissionIDs"`

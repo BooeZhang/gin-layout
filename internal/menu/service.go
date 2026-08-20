@@ -2,7 +2,6 @@ package menu
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -73,7 +72,7 @@ func (s *Service) List(ctx context.Context) ([]domain.MenuItem, error) {
 
 func (s *Service) ListAll(ctx context.Context) ([]domain.Menu, error) {
 	rows, err := s.repo.ListAll(ctx)
-	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+	if err != nil {
 		return nil, err
 	}
 	return rows, nil
@@ -83,7 +82,11 @@ func (s *Service) Create(ctx context.Context, in CreateMenuReq) (res CreateMenuR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("creating menu")
 
-	if existing, err := s.repo.FindByCode(ctx, *in.Code); err == nil && existing != nil {
+	existing, found, err := s.repo.FindByCode(ctx, *in.Code)
+	if err != nil {
+		return res, err
+	}
+	if found && existing != nil {
 		return res, ErrMenuExists
 	}
 
@@ -100,9 +103,12 @@ func (s *Service) Create(ctx context.Context, in CreateMenuReq) (res CreateMenuR
 }
 
 func (s *Service) GetOne(ctx context.Context, id int64) (*domain.MenuItem, error) {
-	m, err := s.repo.FindByID(ctx, id)
+	m, found, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if !found {
+		return nil, ErrMenuNotFound
 	}
 	return toMenuItem(m), nil
 }
@@ -111,9 +117,12 @@ func (s *Service) Update(ctx context.Context, in UpdateMenuReq) (res UpdateMenuR
 	logger := s.Log(ctx)
 	logger.Debug().Any("input", in).Msg("updating menu")
 
-	m, err := s.repo.FindByID(ctx, in.MenuID)
+	m, found, err := s.repo.FindByID(ctx, in.MenuID)
 	if err != nil {
 		return res, err
+	}
+	if !found {
+		return res, ErrMenuNotFound
 	}
 	applyUpdateFields(m, in)
 

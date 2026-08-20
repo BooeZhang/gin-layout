@@ -1,12 +1,9 @@
 package menu
 
-import (
-	"net/http"
-
-	"gin-layout/internal/domain"
-)
+import "errors"
 
 var (
-	ErrInvalidMenuID = domain.NewDomainError(40010, http.StatusUnprocessableEntity, "无效ID")
-	ErrMenuExists    = domain.NewDomainError(40020, http.StatusConflict, "菜单已存在")
+	ErrInvalidMenuID = errors.New("无效ID")
+	ErrMenuExists    = errors.New("菜单已存在")
+	ErrMenuNotFound  = errors.New("菜单不存在")
 )

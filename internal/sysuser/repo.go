@@ -2,6 +2,7 @@ package sysuser
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/samber/lo"
@@ -134,34 +135,37 @@ func (r *SysUserRepository) List(ctx context.Context, q userListQuery) ([]domain
 	return users, total, nil
 }
 
-func (r *SysUserRepository) FindByAccount(ctx context.Context, account string) (*domain.SysUser, error) {
+func (r *SysUserRepository) FindByAccount(ctx context.Context, account string) (*domain.SysUser, bool, error) {
 	m, err := gorm.G[SysUserModel](r.db).Where("account = ?", account).First(ctx)
 	if err != nil {
-		return nil, infra.NormalizeError(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
 	}
 	u := m.toDomain()
-	return &u, nil
+	return &u, true, nil
 }
 
 func (r *SysUserRepository) CreateWithRoles(ctx context.Context, u *domain.SysUser, roleIDs []int64) error {
 	m := toUserModel(u)
-	return infra.NormalizeError(r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := gorm.G[SysUserModel](tx).Create(ctx, &m); err != nil {
 			return err
 		}
 		u.ID = m.ID
 		return r.replaceUserRoles(ctx, tx, m.ID, roleIDs)
-	}))
+	})
 }
 
 func (r *SysUserRepository) UpdateWithRoles(ctx context.Context, u *domain.SysUser, roleIDs []int64) error {
 	m := toUserModel(u)
-	return infra.NormalizeError(r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&m).Error; err != nil {
 			return err
 		}
 		return r.replaceUserRoles(ctx, tx, m.ID, roleIDs)
-	}))
+	})
 }
 
 func (r *SysUserRepository) replaceUserRoles(ctx context.Context, tx *gorm.DB, userID int64, roleIDs []int64) error {
@@ -181,23 +185,26 @@ func (r *SysUserRepository) replaceUserRoles(ctx context.Context, tx *gorm.DB, u
 	return nil
 }
 
-func (r *SysUserRepository) FindByIDWithRoles(ctx context.Context, id int64) (*domain.SysUser, error) {
+func (r *SysUserRepository) FindByIDWithRoles(ctx context.Context, id int64) (*domain.SysUser, bool, error) {
 	var m SysUserModel
 	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&m).Error; err != nil {
-		return nil, infra.NormalizeError(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
 	}
 	u := m.toDomain()
 	roleIDs, err := r.loadRoleIDs(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	u.RoleIDs = roleIDs
-	return &u, nil
+	return &u, true, nil
 }
 
 func (r *SysUserRepository) UpdateLastLogin(ctx context.Context, userID int64, lastLoginAt time.Time) error {
 	_, err := gorm.G[SysUserModel](r.db).Where("id = ?", userID).Update(ctx, "last_login_at", lastLoginAt)
-	return infra.NormalizeError(err)
+	return err
 }
 
 func (r *SysUserRepository) ReplaceUserRoles(ctx context.Context, userID int64, roleIDs []int64) error {

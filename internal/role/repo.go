@@ -2,6 +2,7 @@ package role
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/samber/lo"
@@ -130,7 +131,7 @@ func (r *RoleRepository) CreateWithMenu(ctx context.Context, role *domain.Role, 
 		role.ID = m.ID
 		return r.replaceRoleMenu(ctx, tx, m.ID, menuIDs)
 	})
-	return infra.NormalizeError(err)
+	return err
 }
 
 func (r *RoleRepository) UpdateWithMenu(ctx context.Context, role *domain.Role, menuIDs []int64) error {
@@ -144,7 +145,7 @@ func (r *RoleRepository) UpdateWithMenu(ctx context.Context, role *domain.Role, 
 		}
 		return r.replaceRoleMenu(ctx, tx, m.ID, menuIDs)
 	})
-	return infra.NormalizeError(err)
+	return err
 }
 
 func (r *RoleRepository) replaceRoleMenu(ctx context.Context, tx *gorm.DB, roleID int64, menuIDs []int64) error {
@@ -173,13 +174,16 @@ func (r *RoleRepository) DeleteWithRoleID(ctx context.Context, roleID int64) err
 	})
 }
 
-func (r *RoleRepository) FindByCode(ctx context.Context, code string) (*domain.Role, error) {
+func (r *RoleRepository) FindByCode(ctx context.Context, code string) (*domain.Role, bool, error) {
 	m, err := gorm.G[RoleModel](r.db).Where("code = ?", code).First(ctx)
 	if err != nil {
-		return nil, infra.NormalizeError(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
 	}
 	role := m.toDomain()
-	return &role, nil
+	return &role, true, nil
 }
 
 func (r *RoleRepository) FindCodesByIDs(ctx context.Context, roleIDs []int64) ([]string, error) {
@@ -189,7 +193,7 @@ func (r *RoleRepository) FindCodesByIDs(ctx context.Context, roleIDs []int64) ([
 	var codes []string
 	err := r.db.WithContext(ctx).Model(&RoleModel{}).Where("id IN ?", roleIDs).Pluck("code", &codes).Error
 	if err != nil {
-		return nil, infra.NormalizeError(err)
+		return nil, err
 	}
 	return codes, nil
 }
@@ -214,16 +218,21 @@ func (r *RoleRepository) FindByUserIDs(ctx context.Context, userIDs []int64, ena
 	return roles, nil
 }
 
-func (r *RoleRepository) FindByIDWithPerm(ctx context.Context, roleID int64) (*domain.Role, error) {
-	m, err := r.FindByID(ctx, roleID)
+func (r *RoleRepository) FindByIDWithPerm(ctx context.Context, roleID int64) (*domain.Role, bool, error) {
+	m, found, err := r.FindByID(ctx, roleID)
 	if err != nil {
-		return nil, err
+		return nil, false, err
+	}
+	if !found {
+		return nil, false, nil
 	}
 
 	var menuIDs []int64
-	r.db.WithContext(ctx).Model(&RoleMenuModel{}).Where("role_id = ?", roleID).Pluck("menu_id", &menuIDs)
+	if err := r.db.WithContext(ctx).Model(&RoleMenuModel{}).Where("role_id = ?", roleID).Pluck("menu_id", &menuIDs).Error; err != nil {
+		return nil, false, err
+	}
 	m.MenuIDs = menuIDs
-	return m, nil
+	return m, true, nil
 }
 
 func (r *RoleRepository) ListAll(ctx context.Context) ([]domain.Role, error) {

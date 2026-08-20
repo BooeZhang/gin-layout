@@ -4,17 +4,25 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"net/http"
+	"errors"
 	"strings"
 	"time"
 
-	"gin-layout/internal/domain"
 	"gin-layout/internal/reqctx"
 )
 
 const (
 	TypeAccess  = "access"
 	TypeRefresh = "refresh"
+)
+
+var (
+	ErrInvalidAccessToken = errors.New("无效访问令牌")
+	ErrUnauthenticated    = errors.New("未登录或非法访问")
+	ErrTokenInvalid       = errors.New("token 无效")
+	ErrTokenExpired       = errors.New("token 已过期")
+	ErrTokenNotActive     = errors.New("token 不是活跃状态")
+	ErrTokenRevoked       = errors.New("token 已失效")
 )
 
 type Pair struct {
@@ -46,15 +54,6 @@ type Manager interface {
 	RevokeCurrent(ctx context.Context) (bool, error)
 }
 
-var (
-	ErrInvalidAccessToken = domain.NewDomainError(50010, http.StatusUnauthorized, "无效访问令牌")
-	ErrNotLogin           = domain.NewDomainError(50011, http.StatusUnauthorized, "未登录或非法访问")
-	ErrTokenInvalid       = domain.NewDomainError(50012, http.StatusUnauthorized, "token 无效")
-	ErrTokenExpired       = domain.NewDomainError(50060, http.StatusUnauthorized, "token 已过期")
-	ErrTokenNotActive     = domain.NewDomainError(50070, http.StatusUnauthorized, "token 不是活跃状态")
-	ErrTokenRevoked       = domain.NewDomainError(50061, http.StatusUnauthorized, "token 已失效")
-)
-
 func ParseBearer(authHeader string) (string, error) {
 	const prefix = "Bearer "
 	if !strings.HasPrefix(authHeader, prefix) {
@@ -63,7 +62,7 @@ func ParseBearer(authHeader string) (string, error) {
 	return strings.TrimPrefix(authHeader, prefix), nil
 }
 
-func TokenHash(raw string) string {
+func tokenHash(raw string) string {
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])
 }
@@ -86,22 +85,22 @@ func (m *manager) Parse(raw string) (*Claims, error) {
 }
 
 func (m *manager) IsRevoked(ctx context.Context, raw string) (bool, error) {
-	return m.blacklist.Exists(ctx, TokenHash(raw))
+	return m.blacklist.Exists(ctx, tokenHash(raw))
 }
 
 func (m *manager) Revoke(ctx context.Context, raw string, userID int64, expiresAt time.Time) error {
-	return m.blacklist.Add(ctx, TokenHash(raw), userID, expiresAt)
+	return m.blacklist.Add(ctx, tokenHash(raw), userID, expiresAt)
 }
 
 func (m *manager) RevokeCurrent(ctx context.Context) (bool, error) {
 	user, ok := reqctx.CurrentUserFromContext(ctx)
 	if !ok {
-		return false, ErrNotLogin
+		return false, ErrUnauthenticated
 	}
 
 	raw, ok := reqctx.CurrentTokenFromContext(ctx)
 	if !ok {
-		return false, ErrNotLogin
+		return false, ErrUnauthenticated
 	}
 
 	claims, err := m.issuer.Parse(raw)

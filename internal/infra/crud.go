@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -33,7 +34,7 @@ func NewModelCRUDRepository[M any, ID comparable](db *gorm.DB) *CRUDRepository[M
 func (r *CRUDRepository[D, M, ID]) Create(ctx context.Context, entity *D) error {
 	m := r.mapper.ToModel(entity)
 	if err := gorm.G[M](r.db).Create(ctx, &m); err != nil {
-		return NormalizeError(err)
+		return err
 	}
 	*entity = r.mapper.ToDomain(m) // 回填自增 ID、时间戳等
 	return nil
@@ -41,30 +42,33 @@ func (r *CRUDRepository[D, M, ID]) Create(ctx context.Context, entity *D) error 
 
 func (r *CRUDRepository[D, M, ID]) Update(ctx context.Context, entity *D) error {
 	m := r.mapper.ToModel(entity)
-	return NormalizeError(r.db.WithContext(ctx).Save(&m).Error)
+	return r.db.WithContext(ctx).Save(&m).Error
 }
 
 func (r *CRUDRepository[D, M, ID]) Delete(ctx context.Context, id ID) error {
 	_, err := gorm.G[M](r.db).Where("id = ?", id).Delete(ctx)
 	if err != nil {
-		return NormalizeError(err)
+		return err
 	}
 	return nil
 }
 
-func (r *CRUDRepository[D, M, ID]) FindByID(ctx context.Context, id ID) (*D, error) {
+func (r *CRUDRepository[D, M, ID]) FindByID(ctx context.Context, id ID) (*D, bool, error) {
 	m, err := gorm.G[M](r.db).Where("id = ?", id).First(ctx)
 	if err != nil {
-		return nil, NormalizeError(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
 	}
 	d := r.mapper.ToDomain(m)
-	return &d, nil
+	return &d, true, nil
 }
 
 func (r *CRUDRepository[D, M, ID]) FindByIDs(ctx context.Context, ids []ID) ([]D, error) {
 	ms, err := gorm.G[M](r.db).Where("id in (?)", ids).Find(ctx)
 	if err != nil {
-		return nil, NormalizeError(err)
+		return nil, err
 	}
 	ds := make([]D, 0, len(ms))
 	for _, m := range ms {

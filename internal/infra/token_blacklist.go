@@ -35,7 +35,7 @@ func (r *TokenBlacklistRepository) Exists(ctx context.Context, tokenHash string)
 		Where("token_hash = ?", tokenHash).
 		Where("expires_at > CURRENT_TIMESTAMP").
 		Count(ctx, "id")
-	return count > 0, NormalizeError(err)
+	return count > 0, err
 }
 
 func (r *TokenBlacklistRepository) Add(ctx context.Context, tokenHash string, userID int64, expiresAt time.Time) error {
@@ -51,5 +51,5 @@ func (r *TokenBlacklistRepository) DeleteExpired(ctx context.Context) error {
 	_, err := gorm.G[TokenBlacklistModel](r.db).
 		Where("expires_at < CURRENT_TIMESTAMP").
 		Delete(ctx)
-	return NormalizeError(err)
+	return err
 }
