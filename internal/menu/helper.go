@@ -2,17 +2,15 @@ package menu
 
 import (
 	"sort"
-
-	"gin-layout/internal/domain"
 )
 
-func toMenuItem(m *domain.Menu) *domain.MenuItem {
-	return &domain.MenuItem{
+func toMenuItem(m *Menu) *MenuItem {
+	return &MenuItem{
 		ID:         m.ID,
 		ParentID:   m.ParentID,
 		Name:       m.Name,
 		Code:       stringPtrValue(m.Code),
-		Type:       string(m.Type),
+		Type:       string(m.MenuType),
 		Path:       m.Path,
 		Redirect:   m.Redirect,
 		Component:  m.Component,
@@ -37,14 +35,14 @@ func toMenuItem(m *domain.Menu) *domain.MenuItem {
 	}
 }
 
-func ToMenuTree(rows []domain.Menu) []domain.MenuItem {
-	index := make(map[int64]domain.Menu, len(rows))
+func ToMenuTree(rows []Menu) []MenuItem {
+	index := make(map[int64]Menu, len(rows))
 	for i := range rows {
 		index[rows[i].ID] = rows[i]
 	}
 
-	childrenByParent := make(map[int64][]domain.Menu)
-	roots := make([]domain.Menu, 0)
+	childrenByParent := make(map[int64][]Menu)
+	roots := make([]Menu, 0)
 	for i := range rows {
 		row := rows[i]
 		if row.ParentID == nil {
@@ -58,24 +56,24 @@ func ToMenuTree(rows []domain.Menu) []domain.MenuItem {
 		childrenByParent[*row.ParentID] = append(childrenByParent[*row.ParentID], row)
 	}
 
-	items := make([]domain.MenuItem, 0, len(roots))
+	items := make([]MenuItem, 0, len(roots))
 	for i := range roots {
 		items = append(items, *buildTree(&roots[i], childrenByParent))
 	}
 	return items
 }
 
-func buildTree(row *domain.Menu, childrenByParent map[int64][]domain.Menu) *domain.MenuItem {
+func buildTree(row *Menu, childrenByParent map[int64][]Menu) *MenuItem {
 	item := toMenuItem(row)
 	children := childrenByParent[row.ID]
-	item.Children = make([]domain.MenuItem, 0, len(children))
+	item.Children = make([]MenuItem, 0, len(children))
 	for i := range children {
 		item.Children = append(item.Children, *buildTree(&children[i], childrenByParent))
 	}
 	return item
 }
 
-func sortMenus(rows []domain.Menu) {
+func sortMenus(rows []Menu) {
 	sort.Slice(rows, func(i, j int) bool {
 		if rows[i].Sort == rows[j].Sort {
 			return rows[i].ID < rows[j].ID
@@ -84,9 +82,11 @@ func sortMenus(rows []domain.Menu) {
 	})
 }
 
-func applyCreateInput(m *domain.Menu, input CreateMenuReq) {
+func applyCreateInput(m *Menu, input CreateMenuReq) {
 	m.ParentID = input.ParentID
+	m.Name = input.Name
 	m.Code = input.Code
+	m.MenuType = input.MenuType
 	m.Path = input.Path
 	m.Redirect = input.Redirect
 	m.Component = input.Component
@@ -126,15 +126,15 @@ func applyCreateInput(m *domain.Menu, input CreateMenuReq) {
 	m.PermCode = input.PermCode
 }
 
-func applyUpdateFields(m *domain.Menu, in UpdateMenuReq) {
+func applyUpdateFields(m *Menu, in UpdateMenuReq) {
 	if in.ParentID != nil {
 		m.ParentID = in.ParentID
 	}
 	if in.Name != nil {
 		m.Name = *in.Name
 	}
-	if in.Type != nil {
-		m.Type = *in.Type
+	if in.MenuType != nil {
+		m.MenuType = *in.MenuType
 	}
 	if in.Path != nil {
 		m.Path = *in.Path

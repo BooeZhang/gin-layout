@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"gin-layout/config"
 	"gin-layout/internal/apidoc"
 	"gin-layout/internal/bootstrap/initializer"
@@ -18,8 +20,6 @@ import (
 	"gin-layout/internal/server"
 	"gin-layout/internal/sysuser"
 	"gin-layout/internal/token"
-
-	"github.com/gin-gonic/gin"
 )
 
 const blacklistCleanupInterval = 1 * time.Hour
@@ -161,25 +161,6 @@ func newInfra(cfg *config.Config, logger *infra.Logger) (appInfra, error) {
 
 	logger.Info().Str("driver", cfg.Database.Driver).Msg("database connected")
 
-	if cfg.Server.Mode != gin.ReleaseMode {
-		// 迁移数据库表
-		migErr := db.Migrate(
-			&sysuser.SysUserModel{},
-			&sysuser.SysUserRoleModel{},
-			&role.RoleModel{},
-			&role.RoleMenuModel{},
-			&menu.MenuModel{},
-			&infra.TokenBlacklistModel{},
-		)
-		if migErr != nil {
-			logger.Error().Err(err).Msg("database migration failed")
-			_ = db.Close()
-			return appInfra{}, err
-		}
-
-		logger.Info().Msg("database migration completed")
-	}
-
 	redisClient, err := infra.NewRedis(&cfg.Redis)
 	if err != nil {
 		logger.Error().Err(err).Msg("connect redis failed")
@@ -191,6 +172,7 @@ func newInfra(cfg *config.Config, logger *infra.Logger) (appInfra, error) {
 	return appInfra{db: db, redis: redisClient}, nil
 }
 
+// 数据仓库初始化
 func newRepositories(db *infra.Database) appRepositories {
 	return appRepositories{
 		users:          sysuser.NewRepository(db.DB),

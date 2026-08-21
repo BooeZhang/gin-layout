@@ -24,7 +24,7 @@ func TestCRUDRepositoryFindByID(t *testing.T) {
 		t.Fatalf("migrate: %v", err)
 	}
 
-	repo := NewModelCRUDRepository[crudTestModel, int64](db)
+	repo := NewCRUDRepository[crudTestModel, int64](db)
 	ctx := context.Background()
 
 	entity := &crudTestModel{Name: "found"}

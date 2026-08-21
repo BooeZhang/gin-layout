@@ -19,14 +19,14 @@ type TokenBlacklistModel struct {
 func (TokenBlacklistModel) TableName() string { return "token_black_lists" }
 
 type TokenBlacklistRepository struct {
-	crud *CRUDRepository[TokenBlacklistModel, TokenBlacklistModel, int64]
+	crud *CRUDRepository[TokenBlacklistModel, int64]
 	db   *gorm.DB
 }
 
 func NewTokenBlacklistRepository(db *gorm.DB) *TokenBlacklistRepository {
 	return &TokenBlacklistRepository{
 		db:   db,
-		crud: NewModelCRUDRepository[TokenBlacklistModel, int64](db),
+		crud: NewCRUDRepository[TokenBlacklistModel, int64](db),
 	}
 }
 

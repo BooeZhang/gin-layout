@@ -3,8 +3,6 @@ package menu
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
-
-	"gin-layout/internal/domain"
 )
 
 type Handler struct {
@@ -15,7 +13,7 @@ func NewHandler(svc *Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) List(c *gin.Context, _ struct{}) ([]domain.MenuItem, error) {
+func (h *Handler) List(c *gin.Context, _ struct{}) ([]MenuItem, error) {
 	return h.svc.List(c.Request.Context())
 }
 
@@ -23,7 +21,7 @@ func (h *Handler) Create(c *gin.Context, req CreateMenuReq) (CreateMenuRes, erro
 	return h.svc.Create(c.Request.Context(), req)
 }
 
-func (h *Handler) GetOne(c *gin.Context, _ struct{}) (*domain.MenuItem, error) {
+func (h *Handler) GetOne(c *gin.Context, _ struct{}) (*MenuItem, error) {
 	id := cast.ToInt64(c.Param("id"))
 	if id == 0 {
 		return nil, ErrInvalidMenuID

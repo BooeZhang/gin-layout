@@ -19,7 +19,7 @@
 ### 数据访问
 
 - **多数据库支持** — 开箱即用支持 MySQL、PostgreSQL、SQLite、SQL Server
-- **自动表迁移** — 启动时执行 GORM AutoMigrate，无需手动 SQL 脚本
+- **独立表迁移命令** — 通过 `cmd/migrate` 执行 GORM AutoMigrate，服务启动不修改表结构
 - **类型安全的查询** — 完整的错误转换和类型检查
 
 ### 错误处理与日志
@@ -65,6 +65,8 @@
 ```
 gin-layout/
 ├── cmd/
+│   ├── migrate/
+│   │   └── main.go                      # 数据库迁移入口：加载配置 → 连接数据库 → 执行迁移
 │   └── server/
 │       └── main.go                      # 应用入口：加载配置 → 初始化应用 → 启动服务 → 优雅关闭
 │
@@ -80,7 +82,7 @@ gin-layout/
 │
 ├── internal/                            # 核心业务代码（禁止外部导入）
 │   ├── bootstrap/                       # 应用启动与依赖注入
-│   │   ├── app.go                       # 应用初始化：logger → DB → migrate → repos → services → policies → initializer → router → server
+│   │   ├── app.go                       # 应用初始化：logger → DB → Redis → repos → services → policies → initializer → router → server
 │   │   └── initializer/
 │   │       ├── initializer.go           # 默认超管和菜单权限初始化
 │   │       └── menu.json                # 默认菜单配置
@@ -89,6 +91,7 @@ gin-layout/
 │   │   ├── handler.go                   # HTTP 处理器：登录、刷新令牌、登出、用户 CRUD
 │   │   ├── service.go                   # 用户与认证业务逻辑
 │   │   ├── repo.go                      # 用户和关联表数据访问
+│   │   ├── user.go                      # 用户实体（GORM 模型）与密码行为
 │   │   ├── dto.go                       # DTO 定义
 │   │   ├── errors.go                    # 用户/认证业务错误
 │   │   └── ports.go                     # 接口定义
@@ -97,6 +100,7 @@ gin-layout/
 │   │   ├── handler.go                   # 角色 CRUD HTTP 接口
 │   │   ├── service.go                   # 角色业务逻辑
 │   │   ├── repo.go                      # 角色数据访问
+│   │   ├── types.go                     # 角色实体与关联类型
 │   │   ├── dto.go                       # DTO 定义
 │   │   ├── errors.go                    # 角色业务错误
 │   │   └── ports.go                     # 接口定义
@@ -105,6 +109,7 @@ gin-layout/
 │   │   ├── handler.go                   # 菜单 CRUD HTTP 接口
 │   │   ├── service.go                   # 菜单业务逻辑
 │   │   ├── repo.go                      # 菜单数据访问
+│   │   ├── types.go                     # 菜单实体与树形响应类型
 │   │   ├── helper.go                    # 树形结构处理辅助函数
 │   │   ├── dto.go                       # DTO 定义
 │   │   ├── errors.go                    # 菜单业务错误
@@ -124,16 +129,8 @@ gin-layout/
 │   │   ├── recovery.go                  # 恐慌恢复中间件
 │   │   └── request_id.go                # 请求 ID 链路追踪中间件
 │   │
-│   ├── domain/                          # 纯领域模型和 DomainError
-│   │   ├── sys_user.go                  # SysUser 领域模型
-│   │   ├── role.go                      # Role 领域模型
-│   │   ├── menu.go                      # Menu/MenuItem 领域模型
-│   │   ├── join.go                      # 多对多关联结构定义
-│   │   ├── error.go                     # DomainError/CodedError 定义
-│   │   └── errors.go                    # 通用业务错误常量
-│   │
 │   ├── infra/                           # 基础设施层
-│   │   ├── database.go                  # 数据库连接与迁移
+│   │   ├── database.go                  # 数据库连接
 │   │   ├── crud.go                      # 基础 CRUDRepository 算法复用
 │   │   ├── jwt.go                       # JWT 令牌服务
 │   │   ├── logger.go                    # zerolog 日志初始化
@@ -174,6 +171,9 @@ gin-layout/
 │   ├── token/                           # Token 领域接口
 │   │   └── token.go                     # Manager/Issuer/Claims/错误与 Bearer 解析
 │   │
+│   ├── migration/                       # 数据库表结构迁移
+│       └── migration.go                 # 应用模型迁移清单
+│
 │   └── web/                             # 统一 HTTP 响应
 │       └── response.go                  # Response/OK/Error/DecodeError
 │
@@ -248,7 +248,13 @@ go mod download
 go mod tidy
 ```
 
-#### 4. 运行服务
+#### 4. 迁移数据库表结构
+
+```bash
+make migrate
+```
+
+#### 5. 运行服务
 
 ```bash
 # 开发模式
@@ -259,7 +265,7 @@ make build
 ./bin/gin-layout -c etc/config.toml
 ```
 
-#### 5. 访问服务
+#### 6. 访问服务
 
 - **API 文档**：http://localhost:8085/docs/
 - **健康检查**：http://localhost:8085/health
@@ -268,7 +274,7 @@ make build
 ### Docker 部署
 
 ```bash
-# 一键启动完整栈（应用 + MySQL + Redis）
+# 一键启动完整栈（迁移 + 应用 + MySQL + Redis）
 make docker-build-up
 
 # 查看日志
@@ -419,6 +425,7 @@ allowCredentials = true
 make build          # 编译项目
 make run            # 编译并运行
 make dev            # 开发模式（直接运行）
+make migrate        # 执行数据库表结构迁移
 make test           # 运行测试
 make test-cover     # 生成覆盖率报告
 make clean          # 清理构建产物
@@ -454,20 +461,14 @@ Database (GORM)
 6. Auth - JWT 认证（受保护路由组）
 7. RBAC - 权限检查（受保护路由组）
 
-### 启动顺序
+### 迁移与启动顺序
 
-1. 加载配置
-2. 初始化日志
-3. 连接数据库
-4. 自动迁移表结构
-5. 连接 Redis
-6. 创建数据访问层
-7. 初始化安全组件（Casbin、JWT）
-8. 创建业务层
-9. 初始化默认超管和菜单权限
-10. 加载权限映射
-11. 注册路由并构建 API 文档
-12. 启动 HTTP 服务
+1. 执行 `migrate` 命令：加载配置、连接数据库并迁移表结构
+2. 启动服务：加载配置、初始化日志并连接数据库和 Redis
+3. 创建数据访问层、安全组件和业务层
+4. 初始化默认超管和菜单权限
+5. 加载权限映射，注册路由并构建 API 文档
+6. 启动 HTTP 服务
 
 ## 🐛 常见问题
 
@@ -484,7 +485,7 @@ A: 在对应 feature 包（如 `internal/sysuser/errors.go`、`internal/role/err
 A:
 
 1. 使用 Docker Compose，配置环境变量
-2. 或编译二进制文件 + systemd
+2. 或先执行 `migrate` 二进制，再通过 systemd 启动服务二进制
 3. 前置 Nginx 配置 HTTPS
 4. 修改 JWT secret 为强密钥
 

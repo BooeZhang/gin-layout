@@ -14,6 +14,7 @@ type roleCodeFinder interface {
 	FindCodesByIDs(ctx context.Context, ids []int64) ([]string, error)
 }
 
+// CasbinManager 权限管理对象
 type CasbinManager struct {
 	db        *gorm.DB
 	roles     roleCodeFinder
@@ -22,6 +23,7 @@ type CasbinManager struct {
 	logger    *zerolog.Logger
 }
 
+// NewCasbinManager 初始化一个权限管理对象
 func NewCasbinManager(db *gorm.DB, roles roleCodeFinder, modelPath string, logger *zerolog.Logger) (*CasbinManager, error) {
 	adapter, err := gormadapter.NewTransactionalAdapterByDB(db)
 	if err != nil {
@@ -48,23 +50,34 @@ func NewCasbinManager(db *gorm.DB, roles roleCodeFinder, modelPath string, logge
 	return c, nil
 }
 
-func (m *CasbinManager) SyncUserRoles(ctx context.Context, userAccount string, roleCodes []string) error {
+// SyncSysUserRoles 根据角色 code 同步用户角色
+func (m *CasbinManager) SyncSysUserRoles(ctx context.Context, userAccount string, roleCodes []string) error {
+	if len(roleCodes) == 0 {
+		_, err := m.enforcer.DeleteRolesForUser(userAccount)
+		return err
+	}
+
 	err := m.enforcer.WithTransaction(ctx, func(tx *casbin.Transaction) error {
 		if _, err := m.enforcer.DeleteRolesForUser(userAccount); err != nil {
 			return fmt.Errorf("delete user roles: %w", err)
 		}
+
 		if _, err := m.enforcer.AddRolesForUser(userAccount, roleCodes); err != nil {
 			return fmt.Errorf("add user roles: %w", err)
 		}
+
 		return nil
 	})
+
 	return err
 }
 
-func (m *CasbinManager) SyncUserRolesByIDs(ctx context.Context, userAccount string, roleIDs []int64) error {
+// SyncSysUserRolesByIDs 根据角色 ID 同步用户角色
+func (m *CasbinManager) SyncSysUserRolesByIDs(ctx context.Context, userAccount string, roleIDs []int64) error {
 	if len(roleIDs) == 0 {
-		return m.SyncUserRoles(ctx, userAccount, nil)
+		return m.SyncSysUserRoles(ctx, userAccount, nil)
 	}
+
 	if m.roles == nil {
 		return fmt.Errorf("role repository is nil")
 	}
@@ -73,9 +86,11 @@ func (m *CasbinManager) SyncUserRolesByIDs(ctx context.Context, userAccount stri
 	if err != nil {
 		return err
 	}
-	return m.SyncUserRoles(ctx, userAccount, roleCodes)
+
+	return m.SyncSysUserRoles(ctx, userAccount, roleCodes)
 }
 
+// SyncRolePermissions 同步角色权限
 func (m *CasbinManager) SyncRolePermissions(ctx context.Context, roleCode string, permissions [][]string) error {
 	err := m.enforcer.WithTransaction(ctx, func(tx *casbin.Transaction) error {
 		if _, err := m.enforcer.DeletePermissionsForUser(roleCode); err != nil {
@@ -92,13 +107,16 @@ func (m *CasbinManager) SyncRolePermissions(ctx context.Context, roleCode string
 	return err
 }
 
+// AddRoleToUser 用户添加角色
 func (m *CasbinManager) AddRoleToUser(ctx context.Context, userAccount string, roleCode string) error {
 	if _, err := m.enforcer.AddRoleForUser(userAccount, roleCode); err != nil {
 		return fmt.Errorf("add role to user: %w", err)
 	}
+
 	return nil
 }
 
+// DeleteRole 删除角色
 func (m *CasbinManager) DeleteRole(ctx context.Context, roleCode string) error {
 	if _, err := m.enforcer.DeleteRole(roleCode); err != nil {
 		return fmt.Errorf("delete role: %w", err)

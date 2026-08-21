@@ -1,4 +1,4 @@
-.PHONY: build run test clean docker docker-up docker-down mod tidy
+.PHONY: build run dev migrate test test-cover clean docker docker-up docker-down mod tidy lint vet swag
 
 APP_NAME := gin-layout
 BUILD_DIR := ./bin
@@ -14,6 +14,9 @@ run: build
 
 dev:
 	$(GO) run ./cmd/server -c etc/config.toml
+
+migrate:
+	$(GO) run ./cmd/migrate -c etc/config.toml
 
 test:
 	$(GO) test -v -race -cover ./...
@@ -58,6 +61,7 @@ help:
 	@echo "  build         - Build the application"
 	@echo "  run           - Build and run the application"
 	@echo "  dev           - Run without building"
+	@echo "  migrate       - Run database migrations"
 	@echo "  test          - Run tests"
 	@echo "  test-cover    - Run tests with coverage"
 	@echo "  clean         - Clean build artifacts"

@@ -3,83 +3,25 @@ package role
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/samber/lo"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
 	"gin-layout/internal/page"
+	"gin-layout/internal/sysuser"
 )
 
-type RoleModel struct {
-	ID          int64     `gorm:"primaryKey"`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
-	Name        string    `gorm:"size:50;not null"`
-	Code        string    `gorm:"uniqueIndex;size:50;not null"`
-	Description string    `gorm:"size:255"`
-	Sort        int       `gorm:"default:0"`
-	Enabled     bool      `gorm:"default:true"`
-}
-
-func (RoleModel) TableName() string { return "roles" }
-
-func (m RoleModel) toDomain() domain.Role {
-	return domain.Role{
-		ID:          m.ID,
-		Name:        m.Name,
-		Code:        m.Code,
-		Description: m.Description,
-		Sort:        m.Sort,
-		Enabled:     m.Enabled,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-	}
-}
-
-func toRoleModel(u *domain.Role) RoleModel {
-	return RoleModel{
-		ID:          u.ID,
-		CreatedAt:   u.CreatedAt,
-		UpdatedAt:   u.UpdatedAt,
-		Name:        u.Name,
-		Code:        u.Code,
-		Description: u.Description,
-		Sort:        u.Sort,
-		Enabled:     u.Enabled,
-	}
-}
-
-type RoleMenuModel struct {
-	RoleID int64 `gorm:"primaryKey"`
-	MenuID int64 `gorm:"primaryKey;index"`
-}
-
-func (RoleMenuModel) TableName() string { return "role_menus" }
-
-type userRoleModel struct {
-	UserID int64 `gorm:"primaryKey"`
-	RoleID int64 `gorm:"primaryKey;index"`
-}
-
-func (userRoleModel) TableName() string { return "sys_user_roles" }
-
 type RoleRepository struct {
-	*infra.CRUDRepository[domain.Role, RoleModel, int64]
+	*infra.CRUDRepository[Role, int64]
 	db *gorm.DB
 }
 
 func NewRepository(db *gorm.DB) *RoleRepository {
-	mapper := infra.Mapper[domain.Role, RoleModel]{
-		ToModel:  toRoleModel,
-		ToDomain: RoleModel.toDomain,
-	}
 	return &RoleRepository{
 		db:             db,
-		CRUDRepository: infra.NewCRUDRepository[domain.Role, RoleModel, int64](db, mapper),
+		CRUDRepository: infra.NewCRUDRepository[Role, int64](db),
 	}
 }
 
@@ -90,11 +32,11 @@ type roleListQuery struct {
 	Enabled *bool
 }
 
-func (r *RoleRepository) List(ctx context.Context, q roleListQuery) ([]domain.Role, int64, error) {
+func (r *RoleRepository) List(ctx context.Context, q roleListQuery) ([]Role, int64, error) {
 	var total int64
 	query := q.Normalize()
 
-	filter := r.db.Model(&RoleModel{})
+	filter := r.db.Model(&Role{})
 	if q.Name != nil {
 		filter = filter.Where("name LIKE ?", *q.Name+"%")
 	}
@@ -109,81 +51,70 @@ func (r *RoleRepository) List(ctx context.Context, q roleListQuery) ([]domain.Ro
 		return nil, 0, err
 	}
 
-	var models []RoleModel
+	var models []Role
 	err := filter.Offset(query.Offset()).Limit(query.PageSize).Find(&models).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	roles := lo.Map(models, func(m RoleModel, _ int) domain.Role { return m.toDomain() })
-	return roles, total, nil
+	return models, total, nil
 }
 
-func (r *RoleRepository) CreateWithMenu(ctx context.Context, role *domain.Role, menuIDs []int64) error {
-	m := RoleModel{
-		Name: role.Name, Code: role.Code, Description: role.Description,
-		Sort: role.Sort, Enabled: role.Enabled,
-	}
+func (r *RoleRepository) CreateWithMenu(ctx context.Context, role *Role, menuIDs []int64) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := gorm.G[RoleModel](tx).Create(ctx, &m); err != nil {
+		if err := gorm.G[Role](tx).Create(ctx, role); err != nil {
 			return err
 		}
-		role.ID = m.ID
-		return r.replaceRoleMenu(ctx, tx, m.ID, menuIDs)
+		return r.replaceRoleMenu(ctx, tx, role.ID, menuIDs)
 	})
 	return err
 }
 
-func (r *RoleRepository) UpdateWithMenu(ctx context.Context, role *domain.Role, menuIDs []int64) error {
-	m := RoleModel{
-		ID: role.ID, Name: role.Name, Code: role.Code,
-		Description: role.Description, Sort: role.Sort, Enabled: role.Enabled,
-	}
+func (r *RoleRepository) UpdateWithMenu(ctx context.Context, role *Role, menuIDs []int64) error {
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(&m).Error; err != nil {
+		if err := tx.Save(role).Error; err != nil {
 			return err
 		}
-		return r.replaceRoleMenu(ctx, tx, m.ID, menuIDs)
+		return r.replaceRoleMenu(ctx, tx, role.ID, menuIDs)
 	})
 	return err
 }
 
 func (r *RoleRepository) replaceRoleMenu(ctx context.Context, tx *gorm.DB, roleID int64, menuIDs []int64) error {
-	if err := tx.Where("role_id = ?", roleID).Delete(&RoleMenuModel{}).Error; err != nil {
+	if err := tx.Where("role_id = ?", roleID).Delete(&RoleMenu{}).Error; err != nil {
 		return err
 	}
 	if len(menuIDs) == 0 {
 		return nil
 	}
 
-	items := lo.Map(menuIDs, func(item int64, _ int) RoleMenuModel {
-		return RoleMenuModel{RoleID: roleID, MenuID: item}
+	items := lo.Map(menuIDs, func(item int64, _ int) RoleMenu {
+		return RoleMenu{RoleID: roleID, MenuID: item}
 	})
 	return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&items).Error
 }
 
 func (r *RoleRepository) DeleteWithRoleID(ctx context.Context, roleID int64) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("role_id = ?", roleID).Delete(&RoleMenuModel{}).Error; err != nil {
+		if err := tx.Where("role_id = ?", roleID).Delete(&RoleMenu{}).Error; err != nil {
 			return err
 		}
-		if err := tx.Where("role_id = ?", roleID).Delete(&userRoleModel{}).Error; err != nil {
+		if err := tx.Where("role_id = ?", roleID).Delete(&sysuser.SysUserRole{}).Error; err != nil {
 			return err
 		}
-		return tx.Where("id = ?", roleID).Delete(&RoleModel{}).Error
+		return tx.Where("id = ?", roleID).Delete(&Role{}).Error
 	})
 }
 
-func (r *RoleRepository) FindByCode(ctx context.Context, code string) (*domain.Role, bool, error) {
-	m, err := gorm.G[RoleModel](r.db).Where("code = ?", code).First(ctx)
+func (r *RoleRepository) FindByCode(ctx context.Context, code string) (*Role, bool, error) {
+	m, err := gorm.G[Role](r.db).Where("code = ?", code).First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, false, nil
 		}
 		return nil, false, err
 	}
-	role := m.toDomain()
-	return &role, true, nil
+	return &m, true, nil
 }
 
 func (r *RoleRepository) FindCodesByIDs(ctx context.Context, roleIDs []int64) ([]string, error) {
@@ -191,34 +122,33 @@ func (r *RoleRepository) FindCodesByIDs(ctx context.Context, roleIDs []int64) ([
 		return nil, nil
 	}
 	var codes []string
-	err := r.db.WithContext(ctx).Model(&RoleModel{}).Where("id IN ?", roleIDs).Pluck("code", &codes).Error
+	err := r.db.WithContext(ctx).Model(&Role{}).Where("id IN ?", roleIDs).Pluck("code", &codes).Error
 	if err != nil {
 		return nil, err
 	}
 	return codes, nil
 }
 
-func (r *RoleRepository) FindByUserIDs(ctx context.Context, userIDs []int64, enabled *bool) ([]domain.Role, error) {
+func (r *RoleRepository) FindByUserIDs(ctx context.Context, userIDs []int64, enabled *bool) ([]Role, error) {
 	if len(userIDs) == 0 {
-		return []domain.Role{}, nil
+		return []Role{}, nil
 	}
 
-	db := r.db.WithContext(ctx).Model(&RoleModel{}).
+	db := r.db.WithContext(ctx).Model(&Role{}).
 		Joins("JOIN sys_user_roles ON sys_user_roles.role_id = roles.id").
 		Where("sys_user_roles.user_id IN ?", userIDs)
 	if enabled != nil {
 		db = db.Where("roles.enabled = ?", *enabled)
 	}
 
-	var models []RoleModel
+	var models []Role
 	if err := db.Order("roles.sort ASC, roles.id ASC").Find(&models).Error; err != nil {
 		return nil, err
 	}
-	roles := lo.Map(models, func(m RoleModel, _ int) domain.Role { return m.toDomain() })
-	return roles, nil
+	return models, nil
 }
 
-func (r *RoleRepository) FindByIDWithPerm(ctx context.Context, roleID int64) (*domain.Role, bool, error) {
+func (r *RoleRepository) FindByIDWithPerm(ctx context.Context, roleID int64) (*Role, bool, error) {
 	m, found, err := r.FindByID(ctx, roleID)
 	if err != nil {
 		return nil, false, err
@@ -228,49 +158,41 @@ func (r *RoleRepository) FindByIDWithPerm(ctx context.Context, roleID int64) (*d
 	}
 
 	var menuIDs []int64
-	if err := r.db.WithContext(ctx).Model(&RoleMenuModel{}).Where("role_id = ?", roleID).Pluck("menu_id", &menuIDs).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&RoleMenu{}).Where("role_id = ?", roleID).Pluck("menu_id", &menuIDs).Error; err != nil {
 		return nil, false, err
 	}
 	m.MenuIDs = menuIDs
 	return m, true, nil
 }
 
-func (r *RoleRepository) ListAll(ctx context.Context) ([]domain.Role, error) {
-	models, err := gorm.G[RoleModel](r.db).Where("enabled = ?", true).Order("sort ASC, id ASC").Find(ctx)
-	if err != nil {
-		return nil, err
-	}
-	roles := lo.Map(models, func(m RoleModel, _ int) domain.Role { return m.toDomain() })
-	return roles, nil
+func (r *RoleRepository) ListAll(ctx context.Context) ([]Role, error) {
+	return gorm.G[Role](r.db).Where("enabled = ?", true).Order("sort ASC, id ASC").Find(ctx)
 }
 
-func (r *RoleRepository) RoleAddUser(ctx context.Context, data []domain.UserRole) error {
+func (r *RoleRepository) RoleAddUser(ctx context.Context, data []sysuser.SysUserRole) error {
 	if len(data) == 0 {
 		return nil
 	}
-	items := lo.Map(data, func(item domain.UserRole, _ int) userRoleModel {
-		return userRoleModel{UserID: item.UserID, RoleID: item.RoleID}
-	})
-	return r.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&items).Error
+	return r.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&data).Error
 }
 
 func (r *RoleRepository) RoleRemoveUser(ctx context.Context, roleID int64, userIDs []int64) error {
 	if len(userIDs) == 0 {
 		return nil
 	}
-	return r.db.WithContext(ctx).Where("role_id = ? AND user_id IN ?", roleID, userIDs).Delete(&userRoleModel{}).Error
+	return r.db.WithContext(ctx).Where("role_id = ? AND user_id IN ?", roleID, userIDs).Delete(&sysuser.SysUserRole{}).Error
 }
 
 func (r *RoleRepository) ReplaceRoleMenus(ctx context.Context, roleID int64, menuIDs []int64) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("role_id = ?", roleID).Delete(&RoleMenuModel{}).Error; err != nil {
+		if err := tx.Where("role_id = ?", roleID).Delete(&RoleMenu{}).Error; err != nil {
 			return err
 		}
 		if len(menuIDs) == 0 {
 			return nil
 		}
-		items := lo.Map(menuIDs, func(item int64, _ int) RoleMenuModel {
-			return RoleMenuModel{RoleID: roleID, MenuID: item}
+		items := lo.Map(menuIDs, func(item int64, _ int) RoleMenu {
+			return RoleMenu{RoleID: roleID, MenuID: item}
 		})
 		return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&items).Error
 	})

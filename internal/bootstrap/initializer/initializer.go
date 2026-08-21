@@ -11,7 +11,6 @@ import (
 	"github.com/samber/lo"
 
 	"gin-layout/config"
-	"gin-layout/internal/domain"
 	"gin-layout/internal/infra"
 	"gin-layout/internal/menu"
 	"gin-layout/internal/policy"
@@ -20,32 +19,32 @@ import (
 )
 
 type MenuDefinition struct {
-	ID         int64           `json:"id"`
-	ParentID   *int64          `json:"parentId"`
-	Name       string          `json:"name"`
-	Code       *string         `json:"code"`
-	Type       domain.MenuType `json:"type"`
-	Path       string          `json:"path"`
-	Redirect   string          `json:"redirect"`
-	Component  string          `json:"component"`
-	Icon       string          `json:"icon"`
-	ActiveMenu string          `json:"activeMenu"`
-	Link       string          `json:"link"`
-	Query      string          `json:"query"`
-	Remark     string          `json:"remark"`
-	Sort       int             `json:"sort"`
-	Level      int             `json:"level"`
-	Hidden     bool            `json:"hidden"`
-	Cache      bool            `json:"cache"`
-	Affix      bool            `json:"affix"`
-	Breadcrumb bool            `json:"breadcrumb"`
-	AlwaysShow bool            `json:"alwaysShow"`
-	External   bool            `json:"external"`
-	Iframe     bool            `json:"iframe"`
-	Enabled    bool            `json:"enabled"`
-	Method     string          `json:"method"`
-	APIPath    string          `json:"apiPath"`
-	PermCode   *string         `json:"permCode"`
+	ID         int64     `json:"id"`
+	ParentID   *int64    `json:"parentId"`
+	Name       string    `json:"name"`
+	Code       *string   `json:"code"`
+	MenuType   menu.Type `json:"type"`
+	Path       string    `json:"path"`
+	Redirect   string    `json:"redirect"`
+	Component  string    `json:"component"`
+	Icon       string    `json:"icon"`
+	ActiveMenu string    `json:"activeMenu"`
+	Link       string    `json:"link"`
+	Query      string    `json:"query"`
+	Remark     string    `json:"remark"`
+	Sort       int       `json:"sort"`
+	Level      int       `json:"level"`
+	Hidden     bool      `json:"hidden"`
+	Cache      bool      `json:"cache"`
+	Affix      bool      `json:"affix"`
+	Breadcrumb bool      `json:"breadcrumb"`
+	AlwaysShow bool      `json:"alwaysShow"`
+	External   bool      `json:"external"`
+	Iframe     bool      `json:"iframe"`
+	Enabled    bool      `json:"enabled"`
+	Method     string    `json:"method"`
+	APIPath    string    `json:"apiPath"`
+	PermCode   *string   `json:"permCode"`
 }
 
 type Initializer struct {
@@ -98,7 +97,7 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 		return err
 	}
 	if !found {
-		r = &domain.Role{Name: roleName, Code: roleCode}
+		r = &role.Role{Name: roleName, Code: roleCode}
 		if err := i.roleRepo.Create(ctx, r); err != nil {
 			return err
 		}
@@ -112,7 +111,7 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 		return err
 	}
 	if !found {
-		u = &domain.SysUser{
+		u = &sysuser.SysUser{
 			Account:      account,
 			PasswordHash: password,
 			NickName:     "超级管理员",
@@ -133,7 +132,7 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 		return fmt.Errorf("assign super admin role: %w", err)
 	}
 
-	if err := i.policies.SyncUserRoles(ctx, u.Account, []string{r.Code}); err != nil {
+	if err := i.policies.SyncSysUserRoles(ctx, u.Account, []string{r.Code}); err != nil {
 		return fmt.Errorf("sync super admin role policy: %w", err)
 	}
 	return nil
@@ -152,13 +151,13 @@ func (i *Initializer) initMenu(ctx context.Context) error {
 		return nil
 	}
 
-	data := lo.Map(menus, func(m MenuDefinition, _ int) domain.Menu {
-		return domain.Menu{
+	data := lo.Map(menus, func(m MenuDefinition, _ int) menu.Menu {
+		return menu.Menu{
 			ID:         m.ID,
 			ParentID:   m.ParentID,
 			Name:       m.Name,
 			Code:       optionalSeedString(m.Code),
-			Type:       m.Type,
+			MenuType:   m.MenuType,
 			Path:       m.Path,
 			Redirect:   m.Redirect,
 			Component:  m.Component,

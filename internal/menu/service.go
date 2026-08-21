@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"gin-layout/internal/common"
-	"gin-layout/internal/domain"
 )
 
 type Service struct {
@@ -60,7 +59,7 @@ func (s *Service) ResolvePermissionCode(url, method string) (string, bool) {
 	return code, ok
 }
 
-func (s *Service) List(ctx context.Context) ([]domain.MenuItem, error) {
+func (s *Service) List(ctx context.Context) ([]MenuItem, error) {
 	logger := s.Log(ctx)
 	logger.Debug().Msg("listing menus")
 	rows, err := s.repo.ListAll(ctx)
@@ -70,7 +69,7 @@ func (s *Service) List(ctx context.Context) ([]domain.MenuItem, error) {
 	return ToMenuTree(rows), nil
 }
 
-func (s *Service) ListAll(ctx context.Context) ([]domain.Menu, error) {
+func (s *Service) ListAll(ctx context.Context) ([]Menu, error) {
 	rows, err := s.repo.ListAll(ctx)
 	if err != nil {
 		return nil, err
@@ -90,7 +89,7 @@ func (s *Service) Create(ctx context.Context, in CreateMenuReq) (res CreateMenuR
 		return res, ErrMenuExists
 	}
 
-	m := &domain.Menu{}
+	m := &Menu{}
 	applyCreateInput(m, in)
 
 	if err := s.repo.Create(ctx, m); err != nil {
@@ -102,7 +101,7 @@ func (s *Service) Create(ctx context.Context, in CreateMenuReq) (res CreateMenuR
 	return CreateMenuRes{ID: m.ID}, nil
 }
 
-func (s *Service) GetOne(ctx context.Context, id int64) (*domain.MenuItem, error) {
+func (s *Service) GetOne(ctx context.Context, id int64) (*MenuItem, error) {
 	m, found, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -223,18 +222,18 @@ func (s *Service) FindPermissionObjectsByMenuIDs(ctx context.Context, menuIDs []
 	return objects, nil
 }
 
-func (s *Service) ListEnabledByRoleIDs(ctx context.Context, roleIDs []int64) ([]domain.Menu, error) {
+func (s *Service) ListEnabledByRoleIDs(ctx context.Context, roleIDs []int64) ([]Menu, error) {
 	if len(roleIDs) == 0 {
-		return []domain.Menu{}, nil
+		return []Menu{}, nil
 	}
 	enabled := true
 	return s.repo.FindMenusByRoleIDs(ctx, roleIDs, &enabled)
 }
 
-func (s *Service) FindByRoleIDs(ctx context.Context, roleIDs []int64, enabled *bool) ([]domain.Menu, error) {
+func (s *Service) FindByRoleIDs(ctx context.Context, roleIDs []int64, enabled *bool) ([]Menu, error) {
 	return s.repo.FindMenusByRoleIDs(ctx, roleIDs, enabled)
 }
 
-func (s *Service) ToMenuTree(rows []domain.Menu) []domain.MenuItem {
+func (s *Service) ToMenuTree(rows []Menu) []MenuItem {
 	return ToMenuTree(rows)
 }

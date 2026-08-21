@@ -7,9 +7,10 @@ import (
 	"github.com/samber/lo"
 
 	"gin-layout/internal/common"
-	"gin-layout/internal/domain"
+	"gin-layout/internal/menu"
 	"gin-layout/internal/page"
 	"gin-layout/internal/policy"
+	"gin-layout/internal/sysuser"
 )
 
 type Service struct {
@@ -52,7 +53,7 @@ func (s *Service) List(ctx context.Context, in ListRoleReq) (res page.Result[Rol
 		return res, err
 	}
 
-	items := lo.Map(result, func(item domain.Role, _ int) RoleItem {
+	items := lo.Map(result, func(item Role, _ int) RoleItem {
 		return RoleItem{
 			ID: item.ID, Name: item.Name, Code: item.Code,
 			Description: item.Description, Sort: item.Sort,
@@ -74,7 +75,7 @@ func (s *Service) Create(ctx context.Context, in CreateRoleReq) (res CreateRoleR
 		return res, ErrRoleExists
 	}
 
-	role := &domain.Role{
+	role := &Role{
 		Name: in.Name, Code: in.Code, Description: in.Description,
 		Sort: in.Sort, Enabled: in.Enabled,
 	}
@@ -117,7 +118,7 @@ func (s *Service) GetOne(ctx context.Context, id int64) (*RoleItem, error) {
 		if err != nil {
 			return nil, err
 		}
-		res.PermissionIDs = lo.Map(allMenu, func(item domain.Menu, _ int) int64 { return item.ID })
+		res.PermissionIDs = lo.Map(allMenu, func(item menu.Menu, _ int) int64 { return item.ID })
 	}
 	return res, nil
 }
@@ -192,7 +193,7 @@ func (s *Service) GetAll(ctx context.Context) ([]RoleItem, error) {
 	if err != nil {
 		return nil, err
 	}
-	items := lo.Map(roles, func(item domain.Role, _ int) RoleItem {
+	items := lo.Map(roles, func(item Role, _ int) RoleItem {
 		return RoleItem{ID: item.ID, Name: item.Name, Code: item.Code}
 	})
 	return items, nil
@@ -204,7 +205,7 @@ func (s *Service) ListEnabledRoleIDsForUser(ctx context.Context, userID int64) (
 	if err != nil {
 		return nil, err
 	}
-	return lo.Map(roles, func(item domain.Role, _ int) int64 { return item.ID }), nil
+	return lo.Map(roles, func(item Role, _ int) int64 { return item.ID }), nil
 }
 
 func (s *Service) UserAdd(ctx context.Context, in UserAddReq) (res UserAddRes, err error) {
@@ -219,8 +220,8 @@ func (s *Service) UserAdd(ctx context.Context, in UserAddReq) (res UserAddRes, e
 		return res, nil
 	}
 
-	items := lo.Map(in.UserIDs, func(userID int64, _ int) domain.UserRole {
-		return domain.UserRole{UserID: userID, RoleID: in.RoleID}
+	items := lo.Map(in.UserIDs, func(userID int64, _ int) sysuser.SysUserRole {
+		return sysuser.SysUserRole{UserID: userID, RoleID: in.RoleID}
 	})
 	if err := s.repo.RoleAddUser(ctx, items); err != nil {
 		return res, fmt.Errorf("RoleAddUser (roleID=%d, userIDs=%v): %w", in.RoleID, in.UserIDs, err)
@@ -263,9 +264,9 @@ func (s *Service) UserRemove(ctx context.Context, in UserRemoveReq) (res UserRem
 		if err != nil {
 			return res, err
 		}
-		roleCodes := lo.Map(roles, func(item domain.Role, _ int) string { return item.Code })
+		roleCodes := lo.Map(roles, func(item Role, _ int) string { return item.Code })
 		roleCodes = lo.Filter(roleCodes, func(code string, _ int) bool { return code != role.Code })
-		if err := s.policies.SyncUserRoles(ctx, user.Account, roleCodes); err != nil {
+		if err := s.policies.SyncSysUserRoles(ctx, user.Account, roleCodes); err != nil {
 			return res, fmt.Errorf("SyncUserRoles (account=%s, role=%s): %w", user.Account, role.Code, err)
 		}
 	}

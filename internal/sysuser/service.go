@@ -8,7 +8,7 @@ import (
 	"github.com/samber/lo"
 
 	"gin-layout/internal/common"
-	"gin-layout/internal/domain"
+	"gin-layout/internal/menu"
 	"gin-layout/internal/page"
 	"gin-layout/internal/policy"
 	"gin-layout/internal/reqctx"
@@ -138,7 +138,7 @@ func (s *Service) List(ctx context.Context, in ListUserReq) (res page.Result[Use
 		return res, err
 	}
 
-	items := lo.Map(result, func(item domain.SysUser, _ int) UserItem {
+	items := lo.Map(result, func(item SysUser, _ int) UserItem {
 		return s.toUserItem(item)
 	})
 
@@ -157,7 +157,7 @@ func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserR
 		return res, ErrAccountExists
 	}
 
-	u := &domain.SysUser{
+	u := &SysUser{
 		Account:      in.Account,
 		PasswordHash: in.Password,
 		NickName:     in.NickName,
@@ -180,7 +180,7 @@ func (s *Service) Create(ctx context.Context, in CreateUserReq) (res CreateUserR
 		if err := s.sysUserRepo.CreateWithRoles(ctx, u, in.RoleIDs); err != nil {
 			return res, err
 		}
-		if err := s.policy.SyncUserRolesByIDs(ctx, u.Account, in.RoleIDs); err != nil {
+		if err := s.policy.SyncSysUserRolesByIDs(ctx, u.Account, in.RoleIDs); err != nil {
 			return res, fmt.Errorf("sync user roles (account=%s): %w", u.Account, err)
 		}
 	}
@@ -218,6 +218,7 @@ func (s *Service) Update(ctx context.Context, in UpdateUserReq) (res UpdateUserR
 	if in.NickName != nil {
 		current.NickName = *in.NickName
 	}
+
 	if in.Password != nil {
 		current.PasswordHash = *in.Password
 		if err := current.PwdHash(); err != nil {
@@ -240,7 +241,7 @@ func (s *Service) Update(ctx context.Context, in UpdateUserReq) (res UpdateUserR
 		if err := s.sysUserRepo.UpdateWithRoles(ctx, current, in.RoleIDs); err != nil {
 			return res, err
 		}
-		if err := s.policy.SyncUserRolesByIDs(ctx, current.Account, in.RoleIDs); err != nil {
+		if err := s.policy.SyncSysUserRolesByIDs(ctx, current.Account, in.RoleIDs); err != nil {
 			return res, fmt.Errorf("sync user roles (account=%s): %w", current.Account, err)
 		}
 	} else {
@@ -248,6 +249,7 @@ func (s *Service) Update(ctx context.Context, in UpdateUserReq) (res UpdateUserR
 			return res, err
 		}
 	}
+
 	return res, nil
 }
 
@@ -273,7 +275,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *Service) GetCurrentUserMenus(ctx context.Context) ([]domain.MenuItem, error) {
+func (s *Service) GetCurrentUserMenus(ctx context.Context) ([]menu.MenuItem, error) {
 	currUser, ok := reqctx.CurrentUserFromContext(ctx)
 	if !ok {
 		return nil, token.ErrUnauthenticated
@@ -292,7 +294,7 @@ func (s *Service) GetCurrentUserMenus(ctx context.Context) ([]domain.MenuItem, e
 		return nil, err
 	}
 	if len(roleIDs) == 0 {
-		return []domain.MenuItem{}, nil
+		return []menu.MenuItem{}, nil
 	}
 
 	rows, err := s.menus.ListEnabledByRoleIDs(ctx, roleIDs)
@@ -302,7 +304,7 @@ func (s *Service) GetCurrentUserMenus(ctx context.Context) ([]domain.MenuItem, e
 	return s.menus.ToMenuTree(rows), nil
 }
 
-func (s *Service) toUserItem(u domain.SysUser) UserItem {
+func (s *Service) toUserItem(u SysUser) UserItem {
 	return UserItem{
 		ID:          u.ID,
 		Account:     u.Account,

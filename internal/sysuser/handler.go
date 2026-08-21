@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cast"
 
-	"gin-layout/internal/domain"
+	"gin-layout/internal/menu"
 	"gin-layout/internal/page"
 )
 
@@ -57,6 +57,6 @@ func (h *Handler) Delete(c *gin.Context, _ struct{}) (struct{}, error) {
 	return struct{}{}, h.svc.Delete(c.Request.Context(), id)
 }
 
-func (h *Handler) GetMenus(c *gin.Context, _ struct{}) ([]domain.MenuItem, error) {
+func (h *Handler) GetMenus(c *gin.Context, _ struct{}) ([]menu.MenuItem, error) {
 	return h.svc.GetCurrentUserMenus(c.Request.Context())
 }
