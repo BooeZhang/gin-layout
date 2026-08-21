@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"strings"
 	"time"
 
+	"gin-layout/internal/apperror"
 	"gin-layout/internal/reqctx"
 )
 
@@ -17,12 +17,12 @@ const (
 )
 
 var (
-	ErrInvalidAccessToken = errors.New("无效访问令牌")
-	ErrUnauthenticated    = errors.New("未登录或非法访问")
-	ErrTokenInvalid       = errors.New("token 无效")
-	ErrTokenExpired       = errors.New("token 已过期")
-	ErrTokenNotActive     = errors.New("token 不是活跃状态")
-	ErrTokenRevoked       = errors.New("token 已失效")
+	ErrInvalidAccessToken = apperror.New(apperror.Unauthenticated, 50010, "无效访问令牌")
+	ErrUnauthenticated    = apperror.New(apperror.Unauthenticated, 50011, "未登录或非法访问")
+	ErrTokenInvalid       = apperror.New(apperror.Unauthenticated, 50012, "token 无效")
+	ErrTokenExpired       = apperror.New(apperror.Unauthenticated, 50060, "token 已过期")
+	ErrTokenNotActive     = apperror.New(apperror.Unauthenticated, 50070, "token 不是活跃状态")
+	ErrTokenRevoked       = apperror.New(apperror.Unauthenticated, 50061, "token 已失效")
 )
 
 type Pair struct {

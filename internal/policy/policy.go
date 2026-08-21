@@ -2,10 +2,11 @@ package policy
 
 import (
 	"context"
-	"errors"
+
+	"gin-layout/internal/apperror"
 )
 
-var ErrPermissionDenied = errors.New("没有权限")
+var ErrPermissionDenied = apperror.New(apperror.Forbidden, 30130, "没有权限")
 
 type Manager interface {
 	SyncUserRoles(ctx context.Context, userAccount string, roleCodes []string) error

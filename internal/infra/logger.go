@@ -27,6 +27,7 @@ func NewLogger(cfg *config.LogConfig) *Logger {
 	if cfg.Format == "console" {
 		l = l.Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.DateTime})
 	}
+
 	return &l
 }
 
@@ -60,6 +61,7 @@ func openOutput(outputPath string) (io.Writer, error) {
 	if outputPath == "" {
 		return os.Stdout, nil
 	}
+
 	return os.OpenFile(outputPath+"/app.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0o666)
 }
 

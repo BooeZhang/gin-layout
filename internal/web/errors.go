@@ -3,6 +3,8 @@ package web
 import (
 	"errors"
 	"net/http"
+
+	"gin-layout/internal/apperror"
 )
 
 type ErrorDescriptor struct {
@@ -20,41 +22,40 @@ var (
 	}
 )
 
-type errorMapping struct {
-	target     error
-	descriptor ErrorDescriptor
-}
-
-func newErrorMapping(target error, httpStatus, code int, message string) errorMapping {
-	return errorMapping{
-		target: target,
-		descriptor: ErrorDescriptor{
-			HTTPStatus: httpStatus,
-			Code:       code,
-			Message:    message,
-		},
-	}
-}
-
-func matchError(err error, mappings []errorMapping) (ErrorDescriptor, bool) {
-	for _, mapping := range mappings {
-		if errors.Is(err, mapping.target) {
-			return mapping.descriptor, true
-		}
-	}
-	return ErrorDescriptor{}, false
-}
-
+// DecodeError 将应用错误转换为统一的 Web 响应描述。
 func DecodeError(err error) ErrorDescriptor {
 	if err == nil {
 		return successDescriptor
 	}
 
-	for _, mappings := range allErrorMappings {
-		if descriptor, ok := matchError(err, mappings); ok {
-			return descriptor
+	var appErr *apperror.Error
+	if errors.As(err, &appErr) && appErr != nil {
+		return ErrorDescriptor{
+			HTTPStatus: httpStatusFor(appErr.Kind()),
+			Code:       appErr.Code(),
+			Message:    appErr.Message(),
 		}
 	}
 
 	return internalServerError
+}
+
+// 将应用错误分类映射为 HTTP 状态码。
+func httpStatusFor(kind apperror.Kind) int {
+	switch kind {
+	case apperror.InvalidInput:
+		return http.StatusUnprocessableEntity
+	case apperror.NotFound:
+		return http.StatusNotFound
+	case apperror.Conflict:
+		return http.StatusConflict
+	case apperror.Unauthenticated:
+		return http.StatusUnauthorized
+	case apperror.Forbidden:
+		return http.StatusForbidden
+	case apperror.BusinessResult:
+		return http.StatusOK
+	default:
+		return http.StatusInternalServerError
+	}
 }
