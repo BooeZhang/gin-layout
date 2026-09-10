@@ -3,23 +3,24 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"gin-layout/internal/infra/log"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"gin-layout/config"
-	"gin-layout/internal/apidoc"
 	"gin-layout/internal/bootstrap/initializer"
-	"gin-layout/internal/common"
-	"gin-layout/internal/health"
+	"gin-layout/internal/domain/health"
+	"gin-layout/internal/domain/menu"
+	"gin-layout/internal/domain/role"
+	"gin-layout/internal/domain/sysuser"
+	"gin-layout/internal/http/apidoc"
+	"gin-layout/internal/http/router"
+	"gin-layout/internal/http/server"
 	"gin-layout/internal/infra"
-	"gin-layout/internal/menu"
-	"gin-layout/internal/policy"
-	"gin-layout/internal/role"
-	"gin-layout/internal/router"
-	"gin-layout/internal/server"
-	"gin-layout/internal/sysuser"
-	"gin-layout/internal/token"
+	"gin-layout/internal/shared/common"
+	"gin-layout/internal/shared/policy"
+	"gin-layout/internal/shared/token"
+
+	"github.com/gin-gonic/gin"
 )
 
 const blacklistCleanupInterval = 1 * time.Hour
@@ -28,7 +29,6 @@ type App struct {
 	HTTPServer    *server.Server
 	DB            *infra.Database
 	Redis         *infra.RedisClient
-	Logger        *infra.Logger
 	cleanupCancel context.CancelFunc
 }
 
@@ -55,7 +55,6 @@ type appRepositories struct {
 
 type serviceDeps struct {
 	Cfg      *config.Config
-	Logger   *infra.Logger
 	Tokens   token.Manager
 	Policies policy.Manager
 }
@@ -69,8 +68,11 @@ type appServices struct {
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
-	logger := infra.NewLogger(&cfg.Log)
-	logger.Info().Str("mode", cfg.Server.Mode).Msg("application starting")
+	err := log.Init(cfg.Log)
+	if err != nil {
+		return nil, err
+	}
+	log.Info().Str("mode", cfg.Server.Mode).Msg("application starting")
 
 	appReady := false
 	var infra_ appInfra
@@ -80,22 +82,21 @@ func NewApp(cfg *config.Config) (*App, error) {
 		}
 	}()
 
-	infra_, err := newInfra(cfg, logger)
+	infra_, err = newInfra(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	repos := newRepositories(infra_.db)
-	policies, err := infra.NewCasbinManager(infra_.db.DB, repos.roles, cfg.Casbin.ModelPath, logger)
+	policies, err := infra.NewCasbinManager(infra_.db.DB, repos.roles, cfg.Casbin.ModelPath)
 	if err != nil {
-		logger.Error().Err(err).Msg("init casbin policy manager failed")
+		log.Error().Err(err).Msg("init casbin policy manager failed")
 		return nil, err
 	}
 
 	tokenManager := token.NewManager(infra.NewJWTIssuer(&cfg.JWT), repos.tokenBlacklist)
 	services := newServices(serviceDeps{
 		Cfg:      cfg,
-		Logger:   logger,
 		Tokens:   tokenManager,
 		Policies: policies,
 	}, infra_, repos)
@@ -106,20 +107,19 @@ func NewApp(cfg *config.Config) (*App, error) {
 		Roles:    repos.roles,
 		Menus:    repos.menus,
 		Policies: policies,
-		Logger:   logger,
 	})
 	if err := init.Run(context.Background()); err != nil {
-		logger.Error().Err(err).Msg("bootstrap initialization failed")
+		log.Error().Err(err).Msg("bootstrap initialization failed")
 		return nil, err
 	}
 
 	if err := services.menus.LoadPermissionMap(context.Background()); err != nil {
-		logger.Error().Err(err).Msg("load permission map failed")
+		log.Error().Err(err).Msg("load permission map failed")
 		return nil, err
 	}
 
 	docRegistry := apidoc.NewRegistry()
-	adminRouter := newAdminRouter(logger, services, policies, docRegistry)
+	adminRouter := newAdminRouter(services, policies, docRegistry)
 
 	// Publisher 在路由注册前创建，作为 Router 传入 NewServer。
 	// spec 惰性构建——路由注册完成后显式 Build() 以快速失败。
@@ -129,45 +129,45 @@ func NewApp(cfg *config.Config) (*App, error) {
 		Host: cfg.Server.Host,
 		Port: cfg.Server.Port,
 		Mode: cfg.Server.Mode,
-	}, logger, adminRouter, pub)
+	}, adminRouter, pub)
 
 	// 路由注册后主动构建 spec，确保启动时即可发现错误。
 	if cfg.Server.Mode != gin.ReleaseMode {
 		if err := pub.Build(); err != nil {
-			logger.Error().Err(err).Msg("build API documentation failed")
+			log.Error().Err(err).Msg("build API documentation failed")
 			return nil, err
 		}
-		logger.Info().Msg("API documentation configured")
-		logger.Info().
+		log.Info().Msg("API documentation configured")
+		log.Info().
 			Str("url", fmt.Sprintf("http://%s:%d%s", cfg.Server.Host, cfg.Server.Port, pub.UIPath())).
 			Msg("API docs (Redoc) available")
 	}
 
-	logger.Info().Str("host", cfg.Server.Host).Int("port", cfg.Server.Port).Msg("server configured")
+	log.Info().Str("host", cfg.Server.Host).Int("port", cfg.Server.Port).Msg("server configured")
 
 	appReady = true
-	app := &App{HTTPServer: httpServer, DB: infra_.db, Redis: infra_.redis, Logger: logger}
+	app := &App{HTTPServer: httpServer, DB: infra_.db, Redis: infra_.redis}
 	app.startBlacklistCleanup(repos.tokenBlacklist)
 
 	return app, nil
 }
 
-func newInfra(cfg *config.Config, logger *infra.Logger) (appInfra, error) {
+func newInfra(cfg *config.Config) (appInfra, error) {
 	db, err := infra.NewDatabase(&cfg.Database)
 	if err != nil {
-		logger.Error().Err(err).Msg("connect database failed")
+		log.Error().Err(err).Msg("connect database failed")
 		return appInfra{}, err
 	}
 
-	logger.Info().Str("driver", cfg.Database.Driver).Msg("database connected")
+	log.Info().Str("driver", cfg.Database.Driver).Msg("database connected")
 
 	redisClient, err := infra.NewRedis(&cfg.Redis)
 	if err != nil {
-		logger.Error().Err(err).Msg("connect redis failed")
+		log.Error().Err(err).Msg("connect redis failed")
 		_ = db.Close()
 		return appInfra{}, err
 	}
-	logger.Info().Str("mode", cfg.Redis.Mode).Strs("addrs", cfg.Redis.Addrs).Msg("redis connected")
+	log.Info().Str("mode", cfg.Redis.Mode).Strs("addrs", cfg.Redis.Addrs).Msg("redis connected")
 
 	return appInfra{db: db, redis: redisClient}, nil
 }
@@ -183,7 +183,7 @@ func newRepositories(db *infra.Database) appRepositories {
 }
 
 func newServices(deps serviceDeps, infra_ appInfra, repos appRepositories) appServices {
-	base := common.NewBaseService(deps.Cfg, deps.Logger)
+	base := common.NewBaseService(deps.Cfg)
 	menuSvc := menu.NewService(menu.Deps{Base: base, Repo: repos.menus})
 	roleSvc := role.NewService(role.Deps{
 		Base:   base,
@@ -209,7 +209,7 @@ func newServices(deps serviceDeps, infra_ appInfra, repos appRepositories) appSe
 	}
 }
 
-func newAdminRouter(logger *infra.Logger, services appServices, policies policy.Manager, docRegistry *apidoc.Registry) *router.AdminRouter {
+func newAdminRouter(services appServices, policies policy.Manager, docRegistry *apidoc.Registry) *router.AdminRouter {
 	return router.NewAdminRouter(router.AdminRouterConfig{
 		Health:      health.NewHandler(services.health),
 		User:        sysuser.NewHandler(services.users),
@@ -218,7 +218,6 @@ func newAdminRouter(logger *infra.Logger, services appServices, policies policy.
 		Tokens:      services.tokenManager,
 		Policy:      policies,
 		PermMap:     services.menus,
-		Log:         logger,
 		DocRegistry: docRegistry,
 	})
 }
@@ -227,9 +226,9 @@ func (app *App) Cleanup() {
 	if app.cleanupCancel != nil {
 		app.cleanupCancel()
 	}
-	if app.Logger != nil {
-		app.Logger.Info().Msg("application shutting down")
-	}
+
+	log.Info().Msg("application shutting down")
+
 	if app.DB != nil {
 		_ = app.DB.Close()
 	}
@@ -249,18 +248,18 @@ func (app *App) startBlacklistCleanup(repo *infra.TokenBlacklistRepository) {
 
 		// 在启动时立即运行一次
 		if err := repo.DeleteExpired(ctx); err != nil {
-			app.Logger.Error().Err(err).Msg("initial blacklist cleanup failed")
+			log.Error().Err(err).Msg("initial blacklist cleanup failed")
 		} else {
-			app.Logger.Debug().Msg("initial blacklist cleanup done")
+			log.Debug().Msg("initial blacklist cleanup done")
 		}
 
 		for {
 			select {
 			case <-ticker.C:
 				if err := repo.DeleteExpired(ctx); err != nil {
-					app.Logger.Error().Err(err).Msg("periodic blacklist cleanup failed")
+					log.Error().Err(err).Msg("periodic blacklist cleanup failed")
 				} else {
-					app.Logger.Debug().Msg("periodic blacklist cleanup done")
+					log.Debug().Msg("periodic blacklist cleanup done")
 				}
 			case <-ctx.Done():
 				return

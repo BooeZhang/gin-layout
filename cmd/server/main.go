@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"gin-layout/internal/infra/log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,7 +26,6 @@ func main() {
 
 	app, err := bootstrap.NewApp(cfg)
 	if err != nil {
-		fmt.Printf("wire failed: %v\n", err)
 		os.Exit(1)
 	}
 	defer app.Cleanup()
@@ -35,7 +35,7 @@ func main() {
 		serverErr <- app.HTTPServer.Start()
 	}()
 
-	app.Logger.Info().
+	log.Info().
 		Str("host", cfg.Server.Host).
 		Int("port", cfg.Server.Port).
 		Msg("server started, waiting for shutdown signal")
@@ -47,21 +47,21 @@ func main() {
 	select {
 	case err := <-serverErr:
 		if err != nil {
-			app.Logger.Error().Err(err).Msg("server start failed")
+			log.Error().Err(err).Msg("server start failed")
 		}
 		return
 	case sig := <-quit:
-		app.Logger.Info().Str("signal", sig.String()).Msg("shutdown signal received")
+		log.Info().Str("signal", sig.String()).Msg("shutdown signal received")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := app.HTTPServer.Shutdown(ctx); err != nil {
-		app.Logger.Error().Err(err).Msg("server shutdown failed")
+		log.Error().Err(err).Msg("server shutdown failed")
 	}
 
 	if err := <-serverErr; err != nil {
-		app.Logger.Error().Err(err).Msg("server stopped with error")
+		log.Error().Err(err).Msg("server stopped with error")
 	}
 }

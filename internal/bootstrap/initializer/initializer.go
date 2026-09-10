@@ -4,18 +4,19 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"gin-layout/internal/domain/menu"
+	"gin-layout/internal/infra/log"
 	"os"
 	"strings"
 
 	"github.com/samber/lo"
 
 	"gin-layout/config"
-	"gin-layout/internal/infra"
-	"gin-layout/internal/menu"
-	"gin-layout/internal/policy"
-	"gin-layout/internal/role"
-	"gin-layout/internal/sysuser"
+	"gin-layout/internal/domain/role"
+	"gin-layout/internal/domain/sysuser"
+	"gin-layout/internal/shared/policy"
 )
 
 type MenuDefinition struct {
@@ -53,7 +54,6 @@ type Initializer struct {
 	roleRepo *role.RoleRepository
 	menuRepo *menu.MenuRepository
 	policies policy.Manager
-	logger   *infra.Logger
 }
 
 type Deps struct {
@@ -62,7 +62,6 @@ type Deps struct {
 	Roles    *role.RoleRepository
 	Menus    *menu.MenuRepository
 	Policies policy.Manager
-	Logger   *infra.Logger
 }
 
 func NewInitializer(deps Deps) *Initializer {
@@ -72,7 +71,6 @@ func NewInitializer(deps Deps) *Initializer {
 		roleRepo: deps.Roles,
 		menuRepo: deps.Menus,
 		policies: deps.Policies,
-		logger:   deps.Logger,
 	}
 }
 
@@ -92,25 +90,26 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 	roleName := cmp.Or(i.cfg.Initializer.AdminRoleName, "超级管理员")
 	roleCode := cmp.Or(i.cfg.Initializer.AdminRoleCode, "ADMIN")
 
-	r, found, err := i.roleRepo.FindByCode(ctx, roleCode)
+	r, roleFound, err := i.roleRepo.FindByCode(ctx, roleCode)
 	if err != nil {
 		return err
 	}
-	if !found {
+	if !roleFound {
 		r = &role.Role{Name: roleName, Code: roleCode}
 		if err := i.roleRepo.Create(ctx, r); err != nil {
 			return err
 		}
-		i.logger.Info().Str("role", roleCode).Msg("created super admin role")
-	} else {
-		i.logger.Info().Str("role", roleCode).Msg("super admin role already exists")
+		log.Info().Str("role", roleCode).Msg("created super admin role")
+	}
+	if r == nil {
+		return errors.New("super admin role not found")
 	}
 
-	u, found, err := i.userRepo.FindByAccount(ctx, account)
+	u, userFound, err := i.userRepo.FindByAccount(ctx, account)
 	if err != nil {
 		return err
 	}
-	if !found {
+	if !userFound {
 		u = &sysuser.SysUser{
 			Account:      account,
 			PasswordHash: password,
@@ -123,9 +122,10 @@ func (i *Initializer) initSuperAdmin(ctx context.Context) error {
 		if err := i.userRepo.Create(ctx, u); err != nil {
 			return err
 		}
-		i.logger.Info().Str("account", account).Msg("created super admin user")
-	} else {
-		i.logger.Info().Str("account", account).Msg("super admin user already exists")
+		log.Info().Str("account", account).Msg("created super admin user")
+	}
+	if u == nil {
+		return errors.New("super admin user not found")
 	}
 
 	if err := i.userRepo.ReplaceUserRoles(ctx, u.ID, []int64{r.ID}); err != nil {
@@ -147,7 +147,7 @@ func (i *Initializer) initMenu(ctx context.Context) error {
 	}
 
 	if len(menus) == 0 {
-		i.logger.Info().Str("file", menuFile).Msg("no permission definitions found")
+		log.Info().Str("file", menuFile).Msg("no permission definitions found")
 		return nil
 	}
 
@@ -186,7 +186,7 @@ func (i *Initializer) initMenu(ctx context.Context) error {
 		return fmt.Errorf("create menus: %w", err)
 	}
 
-	i.logger.Info().Int("count", len(menus)).Str("file", menuFile).Msg("menu definitions loaded")
+	log.Info().Int("count", len(menus)).Str("file", menuFile).Msg("menu definitions loaded")
 	return nil
 }
 

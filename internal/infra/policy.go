@@ -6,7 +6,6 @@ import (
 
 	"github.com/casbin/casbin/v3"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
-	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 )
 
@@ -20,11 +19,10 @@ type CasbinManager struct {
 	roles     roleCodeFinder
 	modelPath string
 	enforcer  *casbin.TransactionalEnforcer
-	logger    *zerolog.Logger
 }
 
 // NewCasbinManager 初始化一个权限管理对象
-func NewCasbinManager(db *gorm.DB, roles roleCodeFinder, modelPath string, logger *zerolog.Logger) (*CasbinManager, error) {
+func NewCasbinManager(db *gorm.DB, roles roleCodeFinder, modelPath string) (*CasbinManager, error) {
 	adapter, err := gormadapter.NewTransactionalAdapterByDB(db)
 	if err != nil {
 		return nil, fmt.Errorf("init casbin gorm adapter: %w", err)
@@ -40,7 +38,6 @@ func NewCasbinManager(db *gorm.DB, roles roleCodeFinder, modelPath string, logge
 		roles:     roles,
 		modelPath: modelPath,
 		enforcer:  enforcer,
-		logger:    logger,
 	}
 
 	if err := c.enforcer.LoadPolicy(); err != nil {

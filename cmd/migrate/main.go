@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gin-layout/internal/infra/log"
 	"os"
 
 	"gin-layout/config"
 	"gin-layout/internal/infra"
-	"gin-layout/internal/migration"
+	"gin-layout/internal/infra/migration"
 )
 
 func main() {
@@ -20,22 +21,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger := infra.NewLogger(&cfg.Log)
+	if err := log.Init(cfg.Log); err != nil {
+		panic(err)
+	}
 	db, err := infra.NewDatabase(&cfg.Database)
 	if err != nil {
-		logger.Error().Err(err).Msg("connect database failed")
+		log.Error().Err(err).Msg("connect database failed")
 		os.Exit(1)
 	}
 	defer func() {
 		if err := db.Close(); err != nil {
-			logger.Error().Err(err).Msg("close database failed")
+			log.Error().Err(err).Msg("close database failed")
 		}
 	}()
 
 	if err := migration.Run(db); err != nil {
-		logger.Error().Err(err).Msg("database migration failed")
+		log.Error().Err(err).Msg("database migration failed")
 		os.Exit(1)
 	}
 
-	logger.Info().Str("driver", cfg.Database.Driver).Msg("database migration completed")
+	log.Info().Str("driver", cfg.Database.Driver).Msg("database migration completed")
 }

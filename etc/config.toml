@@ -32,7 +32,24 @@ modelPath = "etc/casbin_model.conf"
 [log]
 level = "debug"
 format = "console"
-outputPath = "logs"
+service = "gin-layout"
+environment = "development"
+version = "1.0.0"
+caller = true
+color = true
+time_format = "2006-01-02T15:04:05.000Z07:00"
+
+[log.output]
+stdout = true
+stderr = false
+
+#[log.output.file]
+#filename = "logs/app.log"
+#max_size = 100
+#max_backups = 3
+#max_age = 7
+#compress = true
+#local_time = true
 
 
 [apidoc]

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"gin-layout/config"
-	"gin-layout/internal/token"
+	"gin-layout/internal/shared/token"
 )
 
 func TestJWTIssuer_Issue_SetsTokenTypes(t *testing.T) {

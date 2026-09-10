@@ -81,53 +81,36 @@ gin-layout/
 │   └── casbin_model.conf                # Casbin RBAC 权限模型
 │
 ├── internal/                            # 核心业务代码（禁止外部导入）
-│   ├── bootstrap/                       # 应用启动与依赖注入
-│   │   ├── app.go                       # 应用初始化：logger → DB → Redis → repos → services → policies → initializer → router → server
-│   │   └── initializer/
-│   │       ├── initializer.go           # 默认超管和菜单权限初始化
-│   │       └── menu.json                # 默认菜单配置
-│   │
-│   ├── sysuser/                         # 系统用户与认证
-│   │   ├── handler.go                   # HTTP 处理器：登录、刷新令牌、登出、用户 CRUD
-│   │   ├── service.go                   # 用户与认证业务逻辑
-│   │   ├── repo.go                      # 用户和关联表数据访问
-│   │   ├── user.go                      # 用户实体（GORM 模型）与密码行为
-│   │   ├── dto.go                       # DTO 定义
-│   │   ├── errors.go                    # 用户/认证业务错误
-│   │   └── ports.go                     # 接口定义
-│   │
-│   ├── role/                            # 角色管理
-│   │   ├── handler.go                   # 角色 CRUD HTTP 接口
-│   │   ├── service.go                   # 角色业务逻辑
-│   │   ├── repo.go                      # 角色数据访问
-│   │   ├── types.go                     # 角色实体与关联类型
-│   │   ├── dto.go                       # DTO 定义
-│   │   ├── errors.go                    # 角色业务错误
-│   │   └── ports.go                     # 接口定义
-│   │
-│   ├── menu/                            # 菜单管理（树形结构）
-│   │   ├── handler.go                   # 菜单 CRUD HTTP 接口
-│   │   ├── service.go                   # 菜单业务逻辑
-│   │   ├── repo.go                      # 菜单数据访问
-│   │   ├── types.go                     # 菜单实体与树形响应类型
-│   │   ├── helper.go                    # 树形结构处理辅助函数
-│   │   ├── dto.go                       # DTO 定义
-│   │   ├── errors.go                    # 菜单业务错误
-│   │   └── ports.go                     # 接口定义
-│   │
-│   ├── health/                          # 健康检查
-│   │   ├── handler.go                   # /health 接口
-│   │   ├── service.go                   # 健康检查逻辑
-│   │   └── ports.go                     # 接口定义
-│   │
-│   ├── middleware/                      # Gin 中间件
-│   │   ├── auth.go                      # JWT 认证中间件
-│   │   ├── rbac.go                      # Casbin 权限检查中间件
-│   │   ├── cors.go                      # CORS 跨域中间件
-│   │   ├── error.go                     # 错误响应中间件
-│   │   ├── logger.go                    # 请求日志中间件
-│   │   ├── recovery.go                  # 恐慌恢复中间件
-│   │   └── request_id.go                # 请求 ID 链路追踪中间件
+│   ├── domain/                          # 业务领域（最常修改）
+│   │   ├── sysuser/                     # 系统用户与认证
+│   │   │   ├── handler.go               # HTTP 处理器：登录、刷新令牌、登出、用户 CRUD
+│   │   │   ├── service.go               # 用户与认证业务逻辑
+│   │   │   ├── repo.go                  # 用户和关联表数据访问
+│   │   │   ├── user.go                  # 用户实体（GORM 模型）与密码行为
+│   │   │   ├── dto.go                   # DTO 定义
+│   │   │   ├── errors.go                # 用户/认证业务错误
+│   │   │   └── ports.go                 # 接口定义
+│   │   ├── role/                        # 角色管理
+│   │   │   ├── handler.go               # 角色 CRUD HTTP 接口
+│   │   │   ├── service.go               # 角色业务逻辑
+│   │   │   ├── repo.go                  # 角色数据访问
+│   │   │   ├── types.go                 # 角色实体与关联类型
+│   │   │   ├── dto.go                   # DTO 定义
+│   │   │   ├── errors.go                # 角色业务错误
+│   │   │   └── ports.go                 # 接口定义
+│   │   ├── menu/                        # 菜单管理（树形结构）
+│   │   │   ├── handler.go               # 菜单 CRUD HTTP 接口
+│   │   │   ├── service.go               # 菜单业务逻辑
+│   │   │   ├── repo.go                  # 菜单数据访问
+│   │   │   ├── types.go                 # 菜单实体与树形响应类型
+│   │   │   ├── helper.go                # 树形结构处理辅助函数
+│   │   │   ├── dto.go                   # DTO 定义
+│   │   │   ├── errors.go                # 菜单业务错误
+│   │   │   └── ports.go                 # 接口定义
+│   │   └── health/                      # 健康检查
+│   │       ├── handler.go               # /health 接口
+│   │       ├── service.go               # 健康检查逻辑
+│   │       └── ports.go                 # 接口定义
 │   │
 │   ├── infra/                           # 基础设施层
 │   │   ├── database.go                  # 数据库连接
@@ -137,45 +120,56 @@ gin-layout/
 │   │   ├── policy.go                    # Casbin 权限策略管理
 │   │   ├── cache.go                     # Redis 缓存
 │   │   ├── token_blacklist.go           # 令牌黑名单实现
-│   │   └── errors.go                    # GORM 错误转换
+│   │   └── migration/                   # 数据库表结构迁移
+│   │       └── migration.go             # 应用模型迁移清单
 │   │
-│   ├── router/                          # 路由配置
-│   │   └── admin.go                     # 管理后台路由组
+│   ├── http/                            # HTTP 层
+│   │   ├── middleware/                  # Gin 中间件
+│   │   │   ├── auth.go                  # JWT 认证中间件
+│   │   │   ├── rbac.go                  # Casbin 权限检查中间件
+│   │   │   ├── cors.go                  # CORS 跨域中间件
+│   │   │   ├── error.go                 # 错误响应中间件
+│   │   │   ├── logger.go                # 请求日志中间件
+│   │   │   ├── recovery.go              # 恐慌恢复中间件
+│   │   │   └── request_id.go            # 请求 ID 链路追踪中间件
+│   │   ├── router/                      # 路由配置
+│   │   │   └── admin.go                 # 管理后台路由组
+│   │   ├── server/                      # HTTP 服务器
+│   │   │   ├── server.go                # HTTP 服务启动、优雅关闭
+│   │   │   └── endpoint.go              # TypedHandler 泛型包装器
+│   │   ├── web/                         # 统一 HTTP 响应
+│   │   │   ├── response.go              # Response/OK/Error/DecodeError
+│   │   │   └── errors.go                # 错误解码
+│   │   └── apidoc/                      # API 文档生成模块
+│   │       ├── builder.go               # 文档构建器
+│   │       ├── config.go                # 文档配置
+│   │       ├── model.go                 # 文档数据模型
+│   │       ├── publisher.go             # Redoc 发布器
+│   │       ├── registry.go              # Schema 注册表
+│   │       ├── schema_builder.go        # Schema 构建器
+│   │       ├── swagger2_renderer.go     # OpenAPI/Swagger 2.0 渲染
+│   │       └── defaults.go              # 文档默认值
 │   │
-│   ├── server/                          # HTTP 服务器
-│   │   ├── server.go                    # HTTP 服务启动、优雅关闭
-│   │   └── endpoint.go                  # TypedHandler 泛型包装器
+│   ├── bootstrap/                       # 应用启动与依赖注入
+│   │   ├── app.go                       # 应用初始化：logger → DB → Redis → repos → services → policies → initializer → router → server
+│   │   └── initializer/
+│   │       ├── initializer.go           # 默认超管和菜单权限初始化
+│   │       └── menu.json                # 默认菜单配置
 │   │
-│   ├── apidoc/                          # API 文档生成模块
-│   │   ├── builder.go                   # 文档构建器
-│   │   ├── config.go                    # 文档配置
-│   │   ├── model.go                     # 文档数据模型
-│   │   ├── publisher.go                 # Redoc 发布器
-│   │   ├── registry.go                  # Schema 注册表
-│   │   ├── schema_builder.go            # Schema 构建器
-│   │   ├── swagger2_renderer.go         # OpenAPI/Swagger 2.0 渲染
-│   │   └── defaults.go                  # 文档默认值
-│   │
-│   ├── common/                          # service 公共支撑
-│   │   └── base.go                      # 日志上下文与管理员判定
-│   │
-│   ├── page/                            # 分页请求/响应（泛型）
-│   │   └── page.go                      # Request/Result 与分页常量
-│   │
-│   ├── policy/                          # RBAC 权限接口
-│   │   └── policy.go                    # Manager/PermissionResolver/ErrNotPermission
-│   │
-│   ├── reqctx/                          # 请求上下文
-│   │   └── context.go                   # CurrentUser/Token/请求 ID 存取
-│   │
-│   ├── token/                           # Token 领域接口
-│   │   └── token.go                     # Manager/Issuer/Claims/错误与 Bearer 解析
-│   │
-│   ├── migration/                       # 数据库表结构迁移
-│       └── migration.go                 # 应用模型迁移清单
+│   └── shared/                          # 共享词汇与契约
+│       ├── apperror/                    # 业务错误模型
+│       │   └── error.go                 # Kind/Error
+│       ├── common/                      # service 公共支撑
+│       │   └── base.go                  # 日志上下文与管理员判定
+│       ├── page/                        # 分页请求/响应（泛型）
+│       │   └── page.go                  # Request/Result 与分页常量
+│       ├── policy/                      # RBAC 权限接口
+│       │   └── policy.go                # Manager/PermissionResolver/ErrNotPermission
+│       ├── reqctx/                      # 请求上下文
+│       │   └── context.go               # CurrentUser/Token/请求 ID 存取
+│       └── token/                       # Token 领域接口
+│           └── token.go                 # Manager/Issuer/Claims/错误与 Bearer 解析
 │
-│   └── web/                             # 统一 HTTP 响应
-│       └── response.go                  # Response/OK/Error/DecodeError
 │
 ├── deploy/                              # 部署配置
 │   ├── Dockerfile                       # 多阶段构建
@@ -461,6 +455,14 @@ Database (GORM)
 6. Auth - JWT 认证（受保护路由组）
 7. RBAC - 权限检查（受保护路由组）
 
+### 目录归属判断（shared vs infra）
+
+新增包时，判断该放 `internal/shared/` 还是 `internal/infra/`：
+
+> **shared 装"契约和词汇"，infra 装"契约的实现和带状态的技术组件"。**
+
+完整判断标准见 [docs/architecture/2026-09-10-shared-vs-infra-boundary.md](docs/architecture/2026-09-10-shared-vs-infra-boundary.md)。
+
 ### 迁移与启动顺序
 
 1. 执行 `migrate` 命令：加载配置、连接数据库并迁移表结构
@@ -479,7 +481,7 @@ A: 修改 `etc/config.toml` 中的 `[database]` 配置，支持 mysql、postgres
 A: 使用 Refresh Token 调用 `/api/auth/refresh-token` 端点获取新的 Access Token
 
 **Q: 如何自定义业务错误码？**
-A: 在对应 feature 包（如 `internal/sysuser/errors.go`、`internal/role/errors.go`）中定义错误，返回 `DomainError` 类型
+A: 在对应 feature 包（如 `internal/domain/sysuser/errors.go`、`internal/domain/role/errors.go`）中定义错误，返回 `DomainError` 类型
 
 **Q: 生产环境怎么部署？**
 A:

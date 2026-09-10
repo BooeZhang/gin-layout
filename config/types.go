@@ -1,5 +1,7 @@
 package config
 
+import "gin-layout/internal/infra/log"
+
 // Config 配置
 type Config struct {
 	Server      ServerConfig      `mapstructure:"server"`
@@ -7,7 +9,7 @@ type Config struct {
 	Redis       RedisConfig       `mapstructure:"redis"`
 	JWT         JWTConfig         `mapstructure:"jwt"`
 	Casbin      CasbinConfig      `mapstructure:"casbin"`
-	Log         LogConfig         `mapstructure:"log"`
+	Log         log.Config        `mapstructure:"log"`
 	Initializer InitializerConfig `mapstructure:"initializer"`
 	APIDoc      APIDocConfig      `mapstructure:"apidoc"`
 }

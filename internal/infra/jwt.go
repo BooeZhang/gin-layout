@@ -8,7 +8,7 @@ import (
 	jwtlib "github.com/golang-jwt/jwt/v5"
 
 	"gin-layout/config"
-	"gin-layout/internal/token"
+	"gin-layout/internal/shared/token"
 )
 
 type jwtClaims struct {
