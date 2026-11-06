@@ -271,19 +271,19 @@ type goldenHealthReq struct{}
 
 type goldenEmptyRes struct{}
 
-func typeOfHealthReq() reflect.Type     { return reflect.TypeOf(goldenHealthReq{}) }
-func typeOfHealthRes() reflect.Type     { return reflect.TypeOf(goldenHealthRes{}) }
-func typeOfLoginReq() reflect.Type      { return reflect.TypeOf(goldenLoginReq{}) }
-func typeOfLoginRes() reflect.Type      { return reflect.TypeOf(goldenLoginRes{}) }
-func typeOfRefreshReq() reflect.Type    { return reflect.TypeOf(goldenRefreshReq{}) }
-func typeOfTokenRes() reflect.Type      { return reflect.TypeOf(goldenTokenRes{}) }
-func typeOfCreateUserReq() reflect.Type { return reflect.TypeOf(goldenCreateUserReq{}) }
-func typeOfUpdateUserReq() reflect.Type { return reflect.TypeOf(goldenUpdateUserReq{}) }
-func typeOfUserRes() reflect.Type       { return reflect.TypeOf(goldenUserRes{}) }
-func typeOfUserListRes() reflect.Type   { return reflect.TypeOf(goldenUserListRes{}) }
+func typeOfHealthReq() reflect.Type     { return reflect.TypeFor[goldenHealthReq]() }
+func typeOfHealthRes() reflect.Type     { return reflect.TypeFor[goldenHealthRes]() }
+func typeOfLoginReq() reflect.Type      { return reflect.TypeFor[goldenLoginReq]() }
+func typeOfLoginRes() reflect.Type      { return reflect.TypeFor[goldenLoginRes]() }
+func typeOfRefreshReq() reflect.Type    { return reflect.TypeFor[goldenRefreshReq]() }
+func typeOfTokenRes() reflect.Type      { return reflect.TypeFor[goldenTokenRes]() }
+func typeOfCreateUserReq() reflect.Type { return reflect.TypeFor[goldenCreateUserReq]() }
+func typeOfUpdateUserReq() reflect.Type { return reflect.TypeFor[goldenUpdateUserReq]() }
+func typeOfUserRes() reflect.Type       { return reflect.TypeFor[goldenUserRes]() }
+func typeOfUserListRes() reflect.Type   { return reflect.TypeFor[goldenUserListRes]() }
 func typeOfGenericPageResult() reflect.Type {
-	return reflect.TypeOf(goldenPageResult[goldenRoleItem]{})
+	return reflect.TypeFor[goldenPageResult[goldenRoleItem]]()
 }
-func typeOfListReq() reflect.Type   { return reflect.TypeOf(goldenListReq{}) }
-func typeOfDeleteReq() reflect.Type { return reflect.TypeOf(goldenDeleteReq{}) }
-func typeOfEmptyRes() reflect.Type  { return reflect.TypeOf(goldenEmptyRes{}) }
+func typeOfListReq() reflect.Type   { return reflect.TypeFor[goldenListReq]() }
+func typeOfDeleteReq() reflect.Type { return reflect.TypeFor[goldenDeleteReq]() }
+func typeOfEmptyRes() reflect.Type  { return reflect.TypeFor[goldenEmptyRes]() }

@@ -127,7 +127,7 @@ func TestRouteGroup_TagDoesNotShareBackingArray(t *testing.T) {
 	}))
 
 	users := v1.Group("/users").Tag("b")
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		users = users.Tag("x")
 	}
 	_ = users.GET("", Query[struct{}, struct{}](func(c *gin.Context, req struct{}) (struct{}, error) {

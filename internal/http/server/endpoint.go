@@ -140,7 +140,7 @@ func Auto[Req, Res any](h TypedHandler[Req, Res]) RouteHandler {
 }
 
 func typeOf[T any]() reflect.Type {
-	return reflect.TypeOf((*T)(nil)).Elem()
+	return reflect.TypeFor[T]()
 }
 
 // RouteGroup 在 Gin group 上添加文档元数据

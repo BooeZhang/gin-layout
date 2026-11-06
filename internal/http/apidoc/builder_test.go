@@ -77,8 +77,8 @@ func TestBuilder_PublicRoute(t *testing.T) {
 	rec := &EndpointRecord{
 		Method:  "GET",
 		Path:    "/health",
-		ReqType: reflect.TypeOf(EmptyReq{}),
-		ResType: reflect.TypeOf(HealthRes{}),
+		ReqType: reflect.TypeFor[EmptyReq](),
+		ResType: reflect.TypeFor[HealthRes](),
 		Binding: BindingQuery,
 		GroupDoc: DocDefaults{
 			Visibility: VisibilityPublic,
@@ -139,8 +139,8 @@ func TestBuilder_ProtectedRoute(t *testing.T) {
 	rec := &EndpointRecord{
 		Method:  "POST",
 		Path:    "/api/v1/users",
-		ReqType: reflect.TypeOf(CreateUserReq{}),
-		ResType: reflect.TypeOf(UserRes{}),
+		ReqType: reflect.TypeFor[CreateUserReq](),
+		ResType: reflect.TypeFor[UserRes](),
 		Binding: BindingJSON,
 		GroupDoc: DocDefaults{
 			Security:   []SecurityScheme{BearerAuth},
@@ -205,8 +205,8 @@ func TestBuilder_QueryBinding(t *testing.T) {
 	rec := &EndpointRecord{
 		Method:  "GET",
 		Path:    "/api/v1/users",
-		ReqType: reflect.TypeOf(ListReq{}),
-		ResType: reflect.TypeOf(ListRes{}),
+		ReqType: reflect.TypeFor[ListReq](),
+		ResType: reflect.TypeFor[ListRes](),
 		Binding: BindingQuery,
 	}
 	reg.Add(rec)
@@ -250,8 +250,8 @@ func TestBuilder_PathParams(t *testing.T) {
 	rec := &EndpointRecord{
 		Method:  "GET",
 		Path:    "/api/v1/users/:id",
-		ReqType: reflect.TypeOf(EmptyReq{}),
-		ResType: reflect.TypeOf(EmptyReq{}),
+		ReqType: reflect.TypeFor[EmptyReq](),
+		ResType: reflect.TypeFor[EmptyReq](),
 		Binding: BindingQuery,
 	}
 	reg.Add(rec)
@@ -287,8 +287,8 @@ func TestBuilder_ErrorMerging(t *testing.T) {
 	rec := &EndpointRecord{
 		Method:  "PUT",
 		Path:    "/api/v1/users/:id",
-		ReqType: reflect.TypeOf(EmptyReq{}),
-		ResType: reflect.TypeOf(EmptyReq{}),
+		ReqType: reflect.TypeFor[EmptyReq](),
+		ResType: reflect.TypeFor[EmptyReq](),
 		Binding: BindingJSON,
 		GroupDoc: DocDefaults{
 			DefaultErrors: []ErrorSpec{
@@ -332,8 +332,8 @@ func TestBuilder_HiddenRoute(t *testing.T) {
 	rec := &EndpointRecord{
 		Method:  "GET",
 		Path:    "/internal/debug",
-		ReqType: reflect.TypeOf(EmptyReq{}),
-		ResType: reflect.TypeOf(EmptyReq{}),
+		ReqType: reflect.TypeFor[EmptyReq](),
+		ResType: reflect.TypeFor[EmptyReq](),
 		Binding: BindingQuery,
 		RouteDoc: RouteDoc{
 			Hidden: &hidden,
@@ -357,8 +357,8 @@ func TestBuilder_SecurityDefinitions(t *testing.T) {
 	rec := &EndpointRecord{
 		Method:  "GET",
 		Path:    "/api/v1/protected",
-		ReqType: reflect.TypeOf(EmptyReq{}),
-		ResType: reflect.TypeOf(EmptyReq{}),
+		ReqType: reflect.TypeFor[EmptyReq](),
+		ResType: reflect.TypeFor[EmptyReq](),
 		Binding: BindingQuery,
 		GroupDoc: DocDefaults{
 			Security:   []SecurityScheme{BearerAuth},
@@ -390,13 +390,13 @@ func TestRegistry_Concurrency(t *testing.T) {
 
 	// 模拟并发注册（防御性检查）。
 	done := make(chan bool)
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		go func(idx int) {
 			rec := &EndpointRecord{
 				Method:  "GET",
 				Path:    "/api/test",
-				ReqType: reflect.TypeOf(EmptyReq{}),
-				ResType: reflect.TypeOf(EmptyReq{}),
+				ReqType: reflect.TypeFor[EmptyReq](),
+				ResType: reflect.TypeFor[EmptyReq](),
 				Binding: BindingQuery,
 			}
 			reg.Add(rec)
@@ -405,7 +405,7 @@ func TestRegistry_Concurrency(t *testing.T) {
 		}(i)
 	}
 
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		<-done
 	}
 

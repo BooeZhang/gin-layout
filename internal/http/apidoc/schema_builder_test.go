@@ -14,7 +14,7 @@ func TestTypeSchemaName(t *testing.T) {
 		want string
 	}{
 		{"nil", nil, ""},
-		{"time.Time", reflect.TypeOf(time.Time{}), "time.Time"},
+		{"time.Time", reflect.TypeFor[time.Time](), "time.Time"},
 	}
 
 	for _, tt := range tests {
@@ -36,7 +36,7 @@ func TestSchemaBuilder_BasicTypes(t *testing.T) {
 		Email string `json:"email"`
 	}
 
-	name := b.addDefinition(reflect.TypeOf(SimpleReq{}))
+	name := b.addDefinition(reflect.TypeFor[SimpleReq]())
 	t.Logf("definition name: %s", name)
 	if name == "" {
 		t.Fatal("expected non-empty definition name")
@@ -95,7 +95,7 @@ func TestSchemaBuilder_NestedStruct(t *testing.T) {
 		Address Address `json:"address"`
 	}
 
-	name := b.addDefinition(reflect.TypeOf(UserReq{}))
+	name := b.addDefinition(reflect.TypeFor[UserReq]())
 	if name == "" {
 		t.Fatal("expected non-empty definition name")
 	}
@@ -123,7 +123,7 @@ func TestSchemaBuilder_EmbeddedStruct(t *testing.T) {
 		Price float64 `json:"price"`
 	}
 
-	name := b.addDefinition(reflect.TypeOf(ProductReq{}))
+	name := b.addDefinition(reflect.TypeFor[ProductReq]())
 	if name == "" {
 		t.Fatal("expected non-empty definition name")
 	}
@@ -148,7 +148,7 @@ func TestSchemaBuilder_Slice(t *testing.T) {
 		Labels []string `json:"labels"`
 	}
 
-	name := b.addDefinition(reflect.TypeOf(TagReq{}))
+	name := b.addDefinition(reflect.TypeFor[TagReq]())
 	if name == "" {
 		t.Fatal("expected non-empty definition name")
 	}
@@ -176,7 +176,7 @@ func TestSchemaBuilder_TimeField(t *testing.T) {
 		CreatedAt time.Time `json:"created_at"`
 	}
 
-	name := b.addDefinition(reflect.TypeOf(EventReq{}))
+	name := b.addDefinition(reflect.TypeFor[EventReq]())
 	if name == "" {
 		t.Fatal("expected non-empty definition name")
 	}
@@ -198,7 +198,7 @@ func TestSchemaBuilder_EmptyStruct(t *testing.T) {
 	b := newSchemaBuilder()
 
 	type EmptyReq struct{}
-	name := b.addDefinition(reflect.TypeOf(EmptyReq{}))
+	name := b.addDefinition(reflect.TypeFor[EmptyReq]())
 	if name == "" {
 		t.Fatal("expected non-empty definition name for named empty struct")
 	}
@@ -245,7 +245,7 @@ func TestFieldName(t *testing.T) {
 		SkipField  string `json:"-"`
 	}
 
-	rt := reflect.TypeOf(testStruct{})
+	rt := reflect.TypeFor[testStruct]()
 
 	tests := []struct {
 		idx  int
@@ -315,7 +315,7 @@ func TestTypeSchemaName_GenericPageResult(t *testing.T) {
 		ID int64 `json:"id"`
 	}
 
-	resType := reflect.TypeOf(testPageResult[testUserItem]{})
+	resType := reflect.TypeFor[testPageResult[testUserItem]]()
 	got := typeSchemaName(resType)
 
 	// The name must NOT contain "/" (which breaks Swagger $ref)
